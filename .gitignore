@@ -1,0 +1,8 @@
+.env
+klaus_credentials.json
+klaus_token.pickle
+klaus_drive_token.pickle
+plaid_token.json
+__pycache__/
+integrations/__pycache__/
+*.pyc

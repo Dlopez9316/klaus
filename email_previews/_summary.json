@@ -1,0 +1,142 @@
+{
+  "autonomous_emails": [
+    {
+      "contact": "Robert Cambo",
+      "email": "rc@alliancecos.com",
+      "companies": [
+        "Alliance Fort Myers, LLC"
+      ],
+      "invoices": 1,
+      "total": 3000.0,
+      "preview_file": "01_autonomous_Robert_Cambo.html"
+    },
+    {
+      "contact": "Jonah Palevsky",
+      "email": "jonah@frankfortergroup.com",
+      "companies": [
+        "JULIAN ORLANDO PROPERTY LP"
+      ],
+      "invoices": 1,
+      "total": 10000.0,
+      "preview_file": "02_autonomous_Jonah_Palevsky.html"
+    },
+    {
+      "contact": "Marc Stansifer",
+      "email": "mstansifer@kittleproperties.com",
+      "companies": [
+        "Vantage Apartments, LLC"
+      ],
+      "invoices": 1,
+      "total": 7811.6,
+      "preview_file": "03_autonomous_Marc_Stansifer.html"
+    },
+    {
+      "contact": "Coraly Rodriguez",
+      "email": "cory@pinnaclehousing.com",
+      "companies": [
+        "Bimini Cove, LLC"
+      ],
+      "invoices": 1,
+      "total": 199.0,
+      "preview_file": "04_autonomous_Coraly_Rodriguez.html"
+    }
+  ],
+  "approval_required": [
+    {
+      "contact": "David Wolkoff",
+      "email": "dwolkoff@harborg.com",
+      "companies": [
+        "DD Sunglow BLVD, LLC",
+        "Argyle Lake at Oakleaf Town Center LP "
+      ],
+      "invoices": 3,
+      "total": 11730.189999999999,
+      "reason": "High escalation (Level 5)",
+      "preview_file": "01_approval_David_Wolkoff.html"
+    },
+    {
+      "contact": "Jim Derow",
+      "email": "jim@cardonecapital.com",
+      "companies": [
+        "M-VIII SOUTH RIVER P1 OWNER, LLC"
+      ],
+      "invoices": 2,
+      "total": 2000.0,
+      "reason": "High escalation (Level 5)",
+      "preview_file": "02_approval_Jim_Derow.html"
+    },
+    {
+      "contact": "Jaime Whaley",
+      "email": "jwhaley@amzak.com",
+      "companies": [
+        "Amzak Station LLC"
+      ],
+      "invoices": 1,
+      "total": 399.0,
+      "reason": "High escalation (Level 5)",
+      "preview_file": "03_approval_Jaime_Whaley.html"
+    },
+    {
+      "contact": "Yani Perez",
+      "email": "yperez@coralrockgroup.com",
+      "companies": [
+        "Card Sound Key Investors, LLC"
+      ],
+      "invoices": 1,
+      "total": 3000.0,
+      "reason": "High escalation (Level 5)",
+      "preview_file": "04_approval_Yani_Perez.html"
+    },
+    {
+      "contact": "Bennet Davis",
+      "email": "bdavis@terragroup.com",
+      "companies": [
+        "TERRA WEST MF INVESTMENTS LLC",
+        "TERRA CITY CENTER MF LLC",
+        "CSP Mixed Use Communities, LLC",
+        "GRP GROVE METRO STATION LLC"
+      ],
+      "invoices": 7,
+      "total": 11000.0,
+      "reason": "High escalation (Level 5)",
+      "preview_file": "05_approval_Bennet_Davis.html"
+    },
+    {
+      "contact": "Ian Haet",
+      "email": "ian@olsoncos.com",
+      "companies": [
+        "AWPRE ENCORE VIVE 2021, LLC"
+      ],
+      "invoices": 4,
+      "total": 4000.0,
+      "reason": "High escalation (Level 5)",
+      "preview_file": "06_approval_Ian_Haet.html"
+    },
+    {
+      "contact": "John Solari",
+      "email": "jsolari@prasset.com",
+      "companies": [
+        "1721 Anniston Road LLC "
+      ],
+      "invoices": 1,
+      "total": 3000.0,
+      "reason": "High escalation (Level 5)",
+      "preview_file": "07_approval_John_Solari.html"
+    }
+  ],
+  "no_action": 3,
+  "total_invoices": 26,
+  "preview_files": [
+    "email_previews\\01_autonomous_Robert_Cambo.html",
+    "email_previews\\02_autonomous_Jonah_Palevsky.html",
+    "email_previews\\03_autonomous_Marc_Stansifer.html",
+    "email_previews\\04_autonomous_Coraly_Rodriguez.html",
+    "email_previews\\01_approval_David_Wolkoff.html",
+    "email_previews\\02_approval_Jim_Derow.html",
+    "email_previews\\03_approval_Jaime_Whaley.html",
+    "email_previews\\04_approval_Yani_Perez.html",
+    "email_previews\\05_approval_Bennet_Davis.html",
+    "email_previews\\06_approval_Ian_Haet.html",
+    "email_previews\\07_approval_John_Solari.html"
+  ]
+}

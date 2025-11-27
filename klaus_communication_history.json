@@ -1,0 +1,186 @@
+[
+  {
+    "invoice_id": "500034191664",
+    "company_name": "Robert Cambo",
+    "method": "email",
+    "message_type": "collection",
+    "sent_at": "2025-11-20T22:43:01.646279",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "493087126872",
+    "company_name": "Jonah Palevsky",
+    "method": "email",
+    "message_type": "collection",
+    "sent_at": "2025-11-20T22:43:01.962147",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "480600867911",
+    "company_name": "Marc Stansifer",
+    "method": "email",
+    "message_type": "collection",
+    "sent_at": "2025-11-20T22:43:02.338038",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "476204025641",
+    "company_name": "Coraly Rodriguez",
+    "method": "email",
+    "message_type": "collection",
+    "sent_at": "2025-11-20T22:43:02.651435",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "INV-2024-001",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-25T18:35:22.494818",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "INV-2024-001",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-25T18:48:02.819981",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1142",
+    "company_name": "MVSA",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T16:42:45.639462",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1142",
+    "company_name": "MVSA",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T16:54:50.028556",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1142",
+    "company_name": "MVSA",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T16:57:19.449859",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1142",
+    "company_name": "MVSA",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T16:58:49.738295",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1142",
+    "company_name": "MVSA",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T17:00:41.765808",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1142",
+    "company_name": "MVSA",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T17:13:45.128490",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1142",
+    "company_name": "MVSA",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T17:18:06.205990",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "2024-001",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T23:51:16.110848",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "2024-001",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T23:57:23.829158",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-26T23:59:27.527364",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T00:02:39.527864",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T00:05:08.628179",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T00:07:23.886915",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T00:09:30.050251",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T00:10:56.986007",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T00:14:24.249383",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "Center for Excellence in Eye Care",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T00:15:59.535067",
+    "approved_by": "manual"
+  }
+]

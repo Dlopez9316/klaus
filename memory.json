@@ -1,0 +1,44 @@
+{
+  "associations": {
+    "pura vida owner": "pura vida owner",
+    "natura gardens": "terra west mf investments",
+    "chips credit via bank of america n a 0959 b o hgi multifamily credit sub reit llc23501 us ref nbnf dml companies coral gables fl 33156 6335 us ac 000000008216 o rg 435029163344 23501 us ogb 4350 29163344 norfolk va 23510 3324 obi uri inv 1357 bbi ocmt usd12923 88 ssn 00547363 trn 0134648311fc": "hg sealofts",
+    "orig name panama flats entry descr avidpay sec ccd ind id ck1213 orig id h562193588": "panama flats owner",
+    "orig name harborgroup pmd entry descr payment sec ccd ind id a00263270 orig id 7010532275": "oak enclave",
+    "orig name harborgroup pmd entry descr payment sec ccd ind id a00263271 orig id 7010532275": "southern and jog apartments",
+    "orig name harborgroup pmd entry descr payment sec ccd ind id a00263272 orig id 7010532275": "argyle lake at oakleaf town center",
+    "orig name harborgroup pmd entry descr payment sec ccd ind id a00263273 orig id 7010532275": "dt residential south dt residential north",
+    "orig name harborgroup pmd entry descr payment sec ccd ind id a00263274 orig id 7010532275": "275 fontainebleau gardens tivoli 275 fontainebleau jglrt 275 fontainebleau 19 realty 275 fontainebleau 1075 units 275 fontainebleau gs 275 fontainebleau fox 275 fontainebleau 485 court 275 fontainebleau vcs 275 fontainebleau",
+    "orig name harborgroup pmd entry descr payment sec ccd ind id h00000021 orig id 7010532275": "locklyn village gardens",
+    "orig name harborgroup pmd entry descr payment sec ccd ind id h00000020 orig id 7010532275": "3645 investors"
+  },
+  "processor_patterns": {},
+  "accounted_transactions": [],
+  "denied_matches": [
+    {
+      "transaction_description": "CHIPS CREDIT VIA: BANK OF AMERICA, N.A./0959 B/O: HGI MULTIFAMILY CREDIT SUB REIT LLC23501 US REF: NBNF=DML COMPANIES LLC CORAL GABLES FL 33156-6335 US/AC-000000008216 O RG=/435029163344 23501 US OGB=/4350 29163344 NORFOLK VA 23510-3324 OBI=/URI/INV-1357 BBI=/OCMT/USD12923,88/ SSN: 00547363 TRN: 0134648311FC",
+      "invoice_id": "493359703650",
+      "denied_at": "2025-11-09T22:25:27.522667"
+    },
+    {
+      "transaction_description": "ORIG CO NAME:HarborGroup PMD ORIG ID:7010532275 DESC DATE:251017 CO ENTRY DESCR:PAYMENT SEC:CCD TRACE#:051000018990173 EED:251017 IND ID:A00259943 IND NAME:LeverageLive.Receivabl TRN: 2908990173TC",
+      "invoice_id": "481558923803",
+      "denied_at": "2025-11-11T12:28:17.758044"
+    },
+    {
+      "transaction_description": "ORIG CO NAME:HarborGroup PMD CO ENTRY DESCR:PAYMENT SEC:CCD IND ID:A00265976 ORIG ID:7010532275",
+      "invoice_id": "394505707292",
+      "denied_at": "2025-11-20T17:25:10.127756"
+    },
+    {
+      "transaction_description": "FEDWIRE CREDIT VIA: HUNTINGTON NATIONAL BANK/044000024 B/O: THE GARRETT COMPANIE BARGERSVILLE, INDIANA 46106 REF: CHASE NYC/CTR/BNF=DML COMPANIES LLC CORAL GABLES FL 33156-6335 US/AC-0 00000008216 RFB=NOTPROVIDED OBI=/UR I/LEVERAGE LIVE - FRMII BBI=/CHGS/U SD0,00/ IMAD: 1119D4B74G1C001372 TRN: 0710791323FF",
+      "invoice_id": "501150098445",
+      "denied_at": "2025-11-20T17:29:22.689055"
+    },
+    {
+      "transaction_description": "ORIG CO NAME:PANAMA FLATS ORIG ID:H562193588 DESC DATE:251110 CO ENTRY DESCR:AVIDPAY SEC:CCD TRACE#:041001033818604 EED:251110 IND ID:CK1213 IND NAME:LEVERAGE LIVE LOCAL REF*CK*1213*Panama Flats\u000192273586 148608161\u000192273586 TRN: 3143818604TC",
+      "invoice_id": "476204025641",
+      "denied_at": "2025-11-20T17:29:24.869969"
+    }
+  ]
+}

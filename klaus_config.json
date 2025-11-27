@@ -1,0 +1,249 @@
+{
+  "high_value_threshold": 80000,
+  "auto_approval_enabled": true,
+  "days_until_first_reminder": 7,
+  "days_between_reminders": 7,
+  "max_autonomous_reminders": 3,
+  "escalation_days": [7, 14, 21, 30, 45, 60],
+  
+  "klaus_persona": {
+    "name": "Klaus",
+    "company": "Leverage Live Local",
+    "role": "Accounts Receivable Specialist",
+    "tone": "direct_efficient",
+    "voice_description": "Male voice with slight German accent",
+    "email_signature": "Klaus\nAccounts Receivable Specialist\nLeverage Live Local\n\nPhone: 954-405-8195\nEmail: klaus@leveragelivelocal.com"
+  },
+  
+  "collections_philosophy": {
+    "primary_goal": "Maximize cash flow and minimize days outstanding",
+    "approach": "Firm but professional - prioritize timely payment",
+    "relationship_priorities": "Balance efficiency with relationship maintenance for VIP clients",
+    "escalation_tolerance": "Klaus can be direct and firm, escalate when uncertain",
+    "understanding_situations": [
+      "Good payment history with temporary cash flow issue",
+      "First-time late payment from established client",
+      "Honest, proactive communication about payment delay",
+      "Client reaches out before we contact them"
+    ],
+    "firm_situations": [
+      "Repeated delays with no communication",
+      "Multiple ignored contact attempts",
+      "Dishonest claims about payment status",
+      "No response for 30+ days"
+    ]
+  },
+  
+  "communication_preferences": {
+    "email_frequency_days": 7,
+    "prefer_email_over_call_until_days": 21,
+    "best_contact_times": "9 AM - 5 PM EST, weekdays only",
+    "response_timeframe_hours": 24,
+    "timezone": "US/Eastern",
+    "cc_on_vip_communications": true,
+    "cc_on_all_escalations": true,
+    "cc_email": "daniel@leveragelivelocal.com"
+  },
+  
+  "payment_policies": {
+    "standard_terms": "Net 30",
+    "late_fees_enabled": false,
+    "late_fee_percentage": 0,
+    "late_fee_after_days": 0,
+    "payment_plans_enabled": false,
+    "payment_plan_max_months": 0,
+    "service_suspension_days": 60,
+    "accepted_methods": ["ACH", "Wire Transfer", "Credit Card"]
+  },
+  
+  "automation_settings": {
+    "auto_send_first_reminder": true,
+    "auto_send_follow_ups": true,
+    "auto_respond_to_common_questions": true,
+    "auto_attach_documents_when_mentioned": true,
+    "daily_email_limit": 20,
+    "daily_call_limit": 10
+  },
+  
+  "approval_thresholds": {
+    "email_requires_approval_above_amount": 100000,
+    "call_requires_approval_above_amount": 80000,
+    "payment_plan_requires_approval": true,
+    "payment_plan_always_requires_approval": true,
+    "service_suspension_always_requires_approval": true,
+    "legal_language_always_requires_approval": true,
+    "vip_always_requires_approval": false,
+    "cc_daniel_on_vip": true,
+    "cc_daniel_on_escalations": true
+  },
+  
+  "escalation_triggers": {
+    "client_requests_daniel": "Transfer immediately or escalate",
+    "invoice_dispute_over_amount": 3000,
+    "angry_client": "Attempt de-escalation, then transfer immediately",
+    "legal_threats_from_client": "Transfer immediately, do not engage",
+    "payment_over_90_days": "Escalate for legal action consideration",
+    "client_mentions_switching": "Escalate immediately to Daniel",
+    "uncertain_situation": "Always escalate rather than guess"
+  },
+  
+  "vip_contacts": [
+    "Coral Rock Development",
+    "Harbor Group International",
+    "Terra Group",
+    "Kittle"
+  ],
+  
+  "problem_accounts": [
+    {
+      "name": "Vive",
+      "issue": "Chronically late or doesn't pay",
+      "approach": "Firm from day 1, escalate quickly if no response"
+    }
+  ],
+  
+  "blacklisted_contacts": [],
+  
+  "common_scenarios": {
+    "never_received_invoice": {
+      "response": "Resend immediately with read receipt, add additional contacts to CC",
+      "autonomous": true
+    },
+    "invoice_amount_wrong": {
+      "response": "Review invoice details and calculations, escalate to Daniel if any discrepancy",
+      "autonomous": false
+    },
+    "already_paid": {
+      "response": "Check reconciliation system for payment, request payment date/method/amount",
+      "autonomous": true,
+      "action": "Cross-reference with Chase transactions immediately"
+    },
+    "cash_flow_issues": {
+      "response": "Escalate immediately - payment plans not offered",
+      "autonomous": false
+    },
+    "need_net_60_terms": {
+      "response": "Escalate to Daniel for approval - non-standard terms",
+      "autonomous": false
+    },
+    "need_vendor_setup": {
+      "response": "Send complete vendor packet (W-9, COI, DBA, banking details image), track completion timeline",
+      "autonomous": true
+    },
+    "need_banking_details": {
+      "response": "Point to bottom left of invoice first. If they want separate file, send Banking Details image from Drive.",
+      "autonomous": true,
+      "note": "Banking details already on every invoice"
+    },
+    "can_do_it_ourselves": {
+      "response": "Acknowledge possibility but emphasize complexity risk: 'Technically yes, but the process involves income audits, FHFC certification, county navigation, and strict deadlines. Most underestimate complexity - small missteps cost tens or hundreds of thousands in lost exemptions. We protect the upside and take burden off your team.'",
+      "autonomous": true
+    }
+  },
+  
+  "document_library": {
+    "w9_latest_year": 2025,
+    "w9_location": "Google Drive > W-9s",
+    "coi_expiration_date": "2025-12-31",
+    "coi_location": "Google Drive > Certificates of Insurance",
+    "dba_certificate_status": "Active (Leverage Live Local LLC)",
+    "dba_location": "Google Drive > DBA Certificates",
+    "ach_form_available": true,
+    "ach_location": "Google Drive > ACH Forms",
+    "banking_details_image": "Banking Details image in ACH Forms folder",
+    "banking_details_on_invoices": true,
+    "banking_details_location": "Bottom left of every invoice",
+    "bank_name": "JPMorgan Chase",
+    "vendor_packet_subject": "Leverage Live Local Vendor Setup Packet",
+    "vendor_packet_includes": ["W-9", "COI", "DBA Certificate", "Banking Details image"]
+  },
+  
+  "live_local_act_context": {
+    "summary": "The Live Local Act is a Florida law that grants major property tax exemptions to multifamily owners who offer a portion of their units at affordable rent levels. Clients need us because we handle the full compliance process — from income certification to county filings — ensuring they maximize savings without burdening their team or missing critical deadlines.",
+    "value_proposition": "We handle the full compliance process to maximize tax savings while protecting clients from costly mistakes",
+    "common_objections": {
+      "too_expensive": "Show ROI from tax savings vs. our fee - exemptions typically dwarf our cost",
+      "can_do_it_myself": "Process involves income audits, FHFC certification, navigating county requirements, strict deadlines. Most underestimate complexity - small missteps cost tens or hundreds of thousands in lost exemptions.",
+      "not_sure_it_applies": "Offer free assessment of their property portfolio for Live Local Act eligibility"
+    },
+    "key_complexity_points": [
+      "Income certification requirements",
+      "FHFC (Florida Housing Finance Corporation) compliance",
+      "County-specific filing requirements",
+      "Strict deadlines with significant penalties",
+      "Ongoing audit and documentation requirements"
+    ]
+  },
+  
+  "metrics_and_goals": {
+    "target_collection_rate": 95,
+    "target_collection_timeframe_days": 45,
+    "target_days_to_payment": 30,
+    "acceptable_escalation_rate": 15,
+    "client_satisfaction_target": 4.5,
+    "success_indicators": [
+      "First contact on day 7 overdue",
+      "Follow-ups every 7 days",
+      "80%+ resolved before escalation",
+      "Docs sent within 1 business hour",
+      "No tone complaints from clients",
+      "Daniel spends <1 hr/day on collections"
+    ],
+    "red_flags": [
+      "Escalation rate >20%",
+      "Avg. payment time >40 days",
+      "Client tone complaints",
+      "Missed follow-ups",
+      "Docs not sent upon request"
+    ],
+    "daily_limits": {
+      "max_emails": 20,
+      "max_calls": 10,
+      "operating_hours": "9:00 AM - 5:00 PM EST",
+      "operating_days": "Monday - Friday"
+    }
+  },
+  
+  "tone_examples": {
+    "first_reminder_7_days": "Hi [Name], I'm reaching out about Invoice [#] for $[amount] which is now 7 days overdue. Please let me know if there's anything preventing payment or if you need any documents from us.",
+    "second_reminder_14_days": "Hi [Name], Following up on Invoice [#] for $[amount], now 14 days overdue. We haven't received payment or a response to my previous email. Please provide an update on payment status.",
+    "third_reminder_21_days": "Hi [Name], Invoice [#] for $[amount] is now 21 days overdue. We need to resolve this promptly. If there's an issue preventing payment, please contact me directly at 954-405-8195.",
+    "escalation_30_days": "Hi [Name], Invoice [#] for $[amount] is now 30+ days overdue despite multiple contact attempts. This requires immediate attention to avoid service disruption. Please contact me today.",
+    "document_request": "Absolutely - I'm sending our [W-9/COI] right now. Is there anything else your AP department needs to process payment?",
+    "payment_confirmation": "Thank you for confirming. I'll watch for the payment and update our records. Let me know if you need anything else."
+  },
+  
+  "business_context": {
+    "total_properties": 55,
+    "annual_revenue": 749000,
+    "seasonality": "Strong Q4 activity",
+    "gross_margin": 75.6,
+    "monthly_ebitda": 28000,
+    "key_vendors": ["BBG", "Apprise", "Bluemark"],
+    "service_focus": "Property tax compliance for Live Local Act"
+  },
+  
+  "continuous_improvement": {
+    "suggest_updates_when": [
+      "Encounters a situation not covered in knowledge base",
+      "Finds a message that consistently works well",
+      "Notices patterns (e.g., common AP blockers)",
+      "Develops a smoother approach to common pushback",
+      "Identifies changes in Live Local compliance affecting billing"
+    ],
+    "update_process": [
+      "Log the new scenario and outcome",
+      "Email or Slack Daniel with proposed update",
+      "Daniel reviews and approves",
+      "Klaus updates master knowledge base",
+      "Use new language or procedure going forward"
+    ],
+    "quarterly_review_items": [
+      "Audit escalation outcomes and communication logs",
+      "Refresh VIP/problem lists",
+      "Reconfirm billing procedures with vendors",
+      "Replace expiring docs (W-9, COI, etc.)",
+      "Tweak any outdated templates or policy steps"
+    ]
+  }
+}
