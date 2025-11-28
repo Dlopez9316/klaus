@@ -960,9 +960,6 @@ async def klaus_analyze_invoices(request: KlausAnalysisRequest):
     Returns autonomous actions and pending approvals
     """
     try:
-        if not klaus_gmail:
-            raise HTTPException(status_code=503, detail="Klaus Gmail not configured")
-        
         # Get all unpaid invoices
         invoices = await hubspot_client.get_invoices()
         
