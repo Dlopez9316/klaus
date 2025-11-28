@@ -1,24 +1,29 @@
 """
 Klaus SMTP Email Client
 Sends collection emails via SMTP when Gmail API credentials are not available
+Saves sent emails to Sent folder via IMAP
 """
 
 import os
 import smtplib
+import imaplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
 from typing import Dict, Optional, List
 from datetime import datetime
+import time
 
 
 class KlausSMTPClient:
-    """Send Klaus collection emails via SMTP"""
+    """Send Klaus collection emails via SMTP with Sent folder saving"""
     
     def __init__(self):
         self.smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
         self.smtp_port = int(os.getenv("SMTP_PORT", "587"))
+        self.imap_host = os.getenv("IMAP_HOST", "imap.gmail.com")
+        self.imap_port = int(os.getenv("IMAP_PORT", "993"))
         self.smtp_user = os.getenv("SMTP_USER")
         self.smtp_password = os.getenv("SMTP_PASSWORD")
         
@@ -36,7 +41,7 @@ class KlausSMTPClient:
         invoice_map: Optional[Dict[str, str]] = None
     ) -> Dict:
         """
-        Send an email via SMTP
+        Send an email via SMTP and save to Sent folder
         
         Args:
             to_email: Recipient email address
@@ -56,6 +61,7 @@ class KlausSMTPClient:
             msg['Subject'] = subject
             msg['From'] = self.smtp_user
             msg['To'] = to_email
+            msg['Date'] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000")
             
             if cc:
                 msg['Cc'] = cc
@@ -91,6 +97,9 @@ class KlausSMTPClient:
                 server.login(self.smtp_user, self.smtp_password)
                 server.send_message(msg)
             
+            # Save to Sent folder via IMAP
+            self._save_to_sent(msg)
+            
             return {
                 "status": "success",
                 "message_id": f"smtp-{datetime.now().strftime('%Y%m%d%H%M%S')}",
@@ -113,6 +122,31 @@ class KlausSMTPClient:
                 "status": "error",
                 "error": str(e)
             }
+    
+    def _save_to_sent(self, msg: MIMEMultipart) -> bool:
+        """Save email to Sent folder via IMAP"""
+        try:
+            # Connect to IMAP
+            imap = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
+            imap.login(self.smtp_user, self.smtp_password)
+            
+            # Select the Sent folder (Gmail uses "[Gmail]/Sent Mail")
+            sent_folder = "[Gmail]/Sent Mail"
+            
+            # Append message to Sent folder
+            imap.append(
+                sent_folder,
+                "\\Seen",
+                imaplib.Time2Internaldate(time.time()),
+                msg.as_bytes()
+            )
+            
+            imap.logout()
+            return True
+            
+        except Exception as e:
+            print(f"⚠ Failed to save to Sent folder: {e}")
+            return False
     
     def _text_to_html(self, text: str, invoice_map: Optional[Dict[str, str]] = None) -> str:
         """Convert plain text email to HTML with proper formatting"""
