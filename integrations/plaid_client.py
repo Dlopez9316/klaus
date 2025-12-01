@@ -59,12 +59,22 @@ class PlaidClient:
             }, f)
     
     def _load_access_token(self) -> str:
-        """Load access token from file"""
+        """Load access token from environment variable or file"""
+        # First check environment variable (for Railway/production)
+        env_token = os.environ.get('PLAID_ACCESS_TOKEN')
+        if env_token:
+            print('[PLAID] Using access token from environment variable')
+            return env_token
+
+        # Fall back to file (for local development)
         if os.path.exists(self.token_file):
             try:
                 with open(self.token_file, 'r') as f:
                     data = json.load(f)
-                    return data.get('access_token')
+                    token = data.get('access_token')
+                    if token:
+                        print('[PLAID] Using access token from file')
+                        return token
             except:
                 pass
         return None
