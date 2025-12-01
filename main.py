@@ -465,6 +465,7 @@ async def reconcile_accounts(
     Matches bank transactions to HubSpot invoices
     Supports both GET (with query params) and POST (with JSON body) for backward compatibility
     """
+    print(f"[RECONCILE] Starting reconciliation - start_date={start_date}, end_date={end_date}, threshold={auto_approve_threshold}")
     try:
         # Handle GET requests with query parameters (backward compatibility)
         if request is None or (start_date is not None or end_date is not None):
@@ -490,16 +491,20 @@ async def reconcile_accounts(
             start_date_dt = end_date_dt - timedelta(days=90)
         
         # Fetch transactions from Plaid
+        print(f"[RECONCILE] Fetching transactions from {start_date_dt.strftime('%Y-%m-%d')} to {end_date_dt.strftime('%Y-%m-%d')}")
         transactions = await plaid_client.get_transactions(
             start_date=start_date_dt.strftime("%Y-%m-%d"),
             end_date=end_date_dt.strftime("%Y-%m-%d")
         )
+        print(f"[RECONCILE] Got {len(transactions)} transactions from Plaid")
         
         # Filter out Stripe transactions
         transactions = [t for t in transactions if 'stripe' not in t.get('description', '').lower()]
+        print(f"[RECONCILE] After filtering Stripe: {len(transactions)} transactions")
         
         # Fetch invoices from HubSpot
         invoices = await hubspot_client.get_invoices()
+        print(f"[RECONCILE] Got {len(invoices)} invoices from HubSpot")
         
         # Match transactions to invoices
         matches = matching_engine.match_transactions_to_invoices(
@@ -572,6 +577,9 @@ async def reconcile_accounts(
         }
     
     except Exception as e:
+        print(f"[RECONCILE] ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/approve", response_model=dict)

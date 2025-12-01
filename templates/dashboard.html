@@ -608,27 +608,53 @@
 
     async function runReconciliation() {
       const btn = document.querySelector('.btn-reconcile');
+      const container = document.getElementById('matches-list');
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Running...';
+      container.innerHTML = '<div class="text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Running reconciliation...</div>';
       try {
         // Calculate date range: 90 days back to today
         const endDate = new Date();
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - 90);
-        
+
         const startDateStr = startDate.toISOString().split('T')[0];
         const endDateStr = endDate.toISOString().split('T')[0];
-        
+
+        console.log('Calling /reconcile with dates:', startDateStr, 'to', endDateStr);
         const response = await fetch(`/reconcile?start_date=${startDateStr}&end_date=${endDateStr}&auto_approve_threshold=50`);
+
+        // Check if response is OK
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          const errorMsg = errorData.detail || `Server error: ${response.status} ${response.statusText}`;
+          container.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${errorMsg}</div>`;
+          console.error('Reconciliation failed:', errorMsg);
+          return;
+        }
+
         const result = await response.json();
-        displayMatches(result.matches);
-        document.getElementById('matches-count').innerText = result.matches_found;
-        document.getElementById('last-run').innerText = new Date().toLocaleString();
+        console.log('Reconciliation result:', result);
+
+        if (result.status === 'success') {
+          displayMatches(result.matches);
+          document.getElementById('matches-count').innerText = result.matches_found || 0;
+          document.getElementById('last-run').innerText = new Date().toLocaleString();
+
+          // Show summary if no matches
+          if (result.matches_found === 0) {
+            container.innerHTML = `<div class="alert alert-info">Reconciliation complete. Analyzed ${result.transactions_analyzed || 0} transactions and ${result.invoices_analyzed || 0} invoices. No matches found.</div>`;
+          }
+        } else {
+          container.innerHTML = `<div class="alert alert-warning">Unexpected response: ${JSON.stringify(result)}</div>`;
+        }
       } catch(e) {
-        alert('Error: ' + e.message);
+        console.error('Reconciliation error:', e);
+        container.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${e.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-lightning-charge me-1"></i> Run Reconciliation Now';
       }
-      btn.disabled = false;
-      btn.innerHTML = '<i class="bi bi-lightning-charge me-1"></i> Run Reconciliation Now';
     }
 
     async function loadSuggestions() {
