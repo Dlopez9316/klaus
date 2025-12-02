@@ -101,7 +101,10 @@ class KlausSMTPClient:
                 server.login(self.smtp_user, self.smtp_password)
                 server.send_message(msg)
             
+            print(f"[SMTP] ✓ Email sent successfully to {to_email}")
+
             # Save to Sent folder via IMAP
+            print("[SMTP] Now attempting to save to Sent folder...")
             saved_to_sent = self._save_to_sent(msg)
 
             return {
