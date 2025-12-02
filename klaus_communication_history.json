@@ -182,5 +182,29 @@
     "message_type": "collection",
     "sent_at": "2025-11-27T00:15:59.535067",
     "approved_by": "manual"
+  },
+  {
+    "invoice_id": "1147",
+    "company_name": "N.E.A.",
+    "method": "call",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T19:17:08.573726",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "460908486431",
+    "company_name": "Jim Derow",
+    "method": "email",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T19:44:01.966162",
+    "approved_by": "manual"
+  },
+  {
+    "invoice_id": "427141853107",
+    "company_name": "Ian Haer",
+    "method": "email",
+    "message_type": "collection",
+    "sent_at": "2025-11-27T19:57:41.975478",
+    "approved_by": "manual"
   }
 ]

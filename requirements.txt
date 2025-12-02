@@ -20,3 +20,4 @@ email-validator==2.1.0
 fuzzywuzzy==0.18.0
 python-Levenshtein==0.21.1
 hubspot-api-client==8.1.0
+psycopg2-binary==2.9.9

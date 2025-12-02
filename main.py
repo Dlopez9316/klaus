@@ -19,6 +19,9 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 import json
 
+# Import database module for Railway-compatible storage
+import database as db
+
 # Existing imports
 from matching_engine import ReconciliationEngine
 from integrations.plaid_client import PlaidClient
@@ -142,7 +145,7 @@ except Exception as e:
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-SCHEDULE_FILE = "schedule_config.json"
+# Schedule config now stored in database via db module
 
 # Initialize and register voice routes
 if klaus_voice:
@@ -240,17 +243,12 @@ class KlausConfigUpdate(BaseModel):
 # ============================================================================
 
 def load_schedule_config():
-    if os.path.exists(SCHEDULE_FILE):
-        try:
-            with open(SCHEDULE_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            pass
-    return {'frequency': 'none', 'time': '09:00'}
+    """Load schedule config from database (Railway) or JSON file (local dev)"""
+    return db.load_schedule_config()
 
 def save_schedule_config(config):
-    with open(SCHEDULE_FILE, 'w') as f:
-        json.dump(config, f)
+    """Save schedule config to database (Railway) or JSON file (local dev)"""
+    db.save_schedule_config(config)
 
 async def scheduled_reconciliation():
     """Scheduled reconciliation job"""
@@ -1317,13 +1315,60 @@ async def vapi_webhook(request: Request):
         return JSONResponse(content={"status": "error", "error": str(e)}, status_code=500)
 
 # ============================================================================
+# DATABASE / MIGRATION ENDPOINTS
+# ============================================================================
+
+@app.post("/admin/migrate", response_model=dict)
+async def migrate_to_database():
+    """
+    Migrate existing JSON files to PostgreSQL database.
+    Call this once after deploying to Railway with DATABASE_URL set.
+    Only works when DATABASE_URL environment variable is configured.
+    """
+    try:
+        if not db.USE_DATABASE:
+            return {
+                "status": "skipped",
+                "message": "No DATABASE_URL found - migration only needed when using PostgreSQL on Railway"
+            }
+
+        db.migrate_json_to_database()
+        return {
+            "status": "success",
+            "message": "Migration complete - data has been moved to PostgreSQL"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/admin/storage-info", response_model=dict)
+async def get_storage_info():
+    """Get information about current storage backend"""
+    return {
+        "status": "success",
+        "using_database": db.USE_DATABASE,
+        "storage_type": "PostgreSQL" if db.USE_DATABASE else "Local JSON files",
+        "database_url_set": bool(os.getenv("DATABASE_URL")),
+        "memory_associations_count": len(matching_engine.memory.get('associations', {})),
+        "klaus_history_count": len(klaus_engine.communication_history)
+    }
+
+
+# ============================================================================
 # STARTUP
 # ============================================================================
 
 @app.on_event("startup")
 async def startup_event():
     """Application startup tasks"""
-    
+
+    # Initialize database if on Railway
+    if db.USE_DATABASE:
+        db.init_database()
+        print("✓ PostgreSQL database initialized")
+    else:
+        print("Using local JSON file storage (no DATABASE_URL)")
+
     # Setup Klaus credentials from environment
     setup_klaus_credentials()
     

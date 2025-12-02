@@ -11,12 +11,15 @@ import re
 import json
 import os
 
+# Import database module for Railway-compatible storage
+import database as db
+
 
 class ReconciliationEngine:
     """
     Intelligent matching engine that learns from your approvals
     """
-    
+
     PROCESSORS = {
         'stripe': {'keywords': ['stripe', 'st-'], 'fee_percent': 3.5, 'fee_fixed': 0.30},
         'avidpay': {'keywords': ['avidpay'], 'fee_percent': 1.0, 'fee_fixed': 0.0},
@@ -26,30 +29,21 @@ class ReconciliationEngine:
         'zelle': {'keywords': ['zelle'], 'fee_percent': 0.0, 'fee_fixed': 0.0},
         'amex': {'keywords': ['american express'], 'fee_percent': 0.0, 'fee_fixed': 0.0}
     }
-    
+
     def __init__(self, anthropic_api_key: str, memory_file: str = "memory.json"):
         self.anthropic_api_key = anthropic_api_key
         self.client = anthropic.Anthropic(api_key=anthropic_api_key) if anthropic_api_key else None
         self.memory_file = memory_file
+        # Use database module for persistent storage (works on Railway)
         self.memory = self._load_memory()
-    
+
     def _load_memory(self) -> Dict:
-        if os.path.exists(self.memory_file):
-            try:
-                with open(self.memory_file, 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        return {
-            'associations': {}, 
-            'processor_patterns': {}, 
-            'denied_matches': [],
-            'accounted_transactions': []
-        }
-    
+        """Load memory from database (Railway) or JSON file (local dev)"""
+        return db.load_memory()
+
     def _save_memory(self):
-        with open(self.memory_file, 'w') as f:
-            json.dump(self.memory, f, indent=2)
+        """Save memory to database (Railway) or JSON file (local dev)"""
+        db.save_memory(self.memory)
     
     def learn_association(self, transaction_name: str, company_name: str):
         trans_clean = self._clean_company_name(transaction_name)

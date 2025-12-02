@@ -13,6 +13,9 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 import pytz
 
+# Import database module for Railway-compatible storage
+import database as db
+
 
 class CallOutcome(Enum):
     """Possible call outcomes"""
@@ -117,21 +120,18 @@ class KlausVoiceAgent:
         self.webhook_url = os.getenv("KLAUS_WEBHOOK_URL", "")
     
     def _load_call_history(self):
-        """Load call history from file"""
+        """Load call history from database (Railway) or JSON file (local dev)"""
         try:
-            if os.path.exists(self.call_history_file):
-                with open(self.call_history_file, 'r') as f:
-                    data = json.load(f)
-                    self.call_history = [CallRecord(**record) for record in data]
+            data = db.load_call_history()
+            self.call_history = [CallRecord(**record) for record in data]
         except Exception as e:
             print(f"Error loading call history: {e}")
             self.call_history = []
-    
+
     def _save_call_history(self):
-        """Save call history to file"""
+        """Save call history to database (Railway) or JSON file (local dev)"""
         try:
-            with open(self.call_history_file, 'w') as f:
-                json.dump([record.to_dict() for record in self.call_history], f, indent=2)
+            db.save_call_history([record.to_dict() for record in self.call_history])
         except Exception as e:
             print(f"Error saving call history: {e}")
     

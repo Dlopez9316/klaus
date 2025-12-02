@@ -460,5 +460,26 @@
     "follow_up_required": false,
     "follow_up_action": null,
     "notes": null
+  },
+  {
+    "call_id": "019ac7d2-0b78-722a-8bbe-8e1e96ee3e9b",
+    "call_type": "outbound_collection",
+    "phone_number": "+13052981154",
+    "contact_name": "JC",
+    "company_name": "N.E.A.",
+    "invoice_ids": [
+      "1147"
+    ],
+    "total_amount": 5000.0,
+    "started_at": "2025-11-27T19:17:08.558760",
+    "ended_at": null,
+    "duration_seconds": null,
+    "status": "initiated",
+    "outcome": null,
+    "transcript": null,
+    "recording_url": null,
+    "follow_up_required": false,
+    "follow_up_action": null,
+    "notes": null
   }
 ]

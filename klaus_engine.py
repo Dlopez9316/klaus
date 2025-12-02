@@ -9,19 +9,23 @@ import json
 import os
 from collections import defaultdict
 
+# Import database module for Railway-compatible storage
+import database as db
+
 
 class KlausEngine:
     """
     Klaus - Autonomous Collections Agent
-    
+
     Determines when to contact clients about unpaid invoices,
     manages escalation paths, and tracks all communications.
-    
+
     CONSOLIDATES INVOICES BY COMPANY - sends one email per company
     """
-    
+
     def __init__(self, config_path: str = "klaus_config.json"):
         self.config_path = config_path
+        # Use database module for persistent storage (works on Railway)
         self.config = self._load_config()
         self.communication_history = []
         self._load_history()
@@ -36,36 +40,12 @@ class KlausEngine:
         self.max_autonomous_reminders = self.config.get('max_autonomous_reminders', 3)
     
     def _load_config(self) -> Dict:
-        """Load Klaus configuration"""
-        if os.path.exists(self.config_path):
-            try:
-                with open(self.config_path, 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        
-        # Default configuration
-        return {
-            'high_value_threshold': 5000,
-            'auto_approval_enabled': True,
-            'days_until_first_reminder': 7,
-            'days_between_reminders': 7,
-            'max_autonomous_reminders': 3,
-            'escalation_days': [7, 14, 21, 30, 45, 60],
-            'klaus_persona': {
-                'name': 'Klaus',
-                'company': 'Leverage Live Local',
-                'tone': 'professional_friendly',
-                'email_signature': 'Klaus\nAccounts Receivable Specialist\nLeverage Live Local\n\nPhone: 305-209-7218\nEmail: klaus@leveragelivelocal.com'
-            },
-            'blacklisted_contacts': [],
-            'vip_contacts': []
-        }
-    
+        """Load Klaus configuration from database (Railway) or JSON file (local dev)"""
+        return db.load_klaus_config()
+
     def save_config(self):
-        """Save current configuration"""
-        with open(self.config_path, 'w') as f:
-            json.dump(self.config, indent=2, fp=f)
+        """Save current configuration to database (Railway) or JSON file (local dev)"""
+        db.save_klaus_config(self.config)
     
     def _extract_invoice_number(self, invoice: Dict) -> str:
         """
@@ -824,7 +804,8 @@ Best regards,
         message_type: str,
         approved_by: Optional[str] = None
     ):
-        """Log a communication attempt"""
+        """Log a communication attempt to database (Railway) or JSON file (local dev)"""
+        # Add to local cache
         self.communication_history.append({
             'invoice_id': invoice_id,
             'company_name': company_name,
@@ -833,23 +814,17 @@ Best regards,
             'sent_at': datetime.now().isoformat(),
             'approved_by': approved_by
         })
-        
-        # Save to file
-        self._save_history()
-    
+
+        # Save to database/file
+        db.add_communication(invoice_id, company_name, method, message_type, approved_by)
+
     def _save_history(self):
-        """Save communication history"""
-        with open('klaus_communication_history.json', 'w') as f:
-            json.dump(self.communication_history, indent=2, fp=f)
-    
+        """Save communication history to database (Railway) or JSON file (local dev)"""
+        db.save_communication_history(self.communication_history)
+
     def _load_history(self):
-        """Load communication history"""
-        if os.path.exists('klaus_communication_history.json'):
-            try:
-                with open('klaus_communication_history.json', 'r') as f:
-                    self.communication_history = json.load(f)
-            except:
-                self.communication_history = []
+        """Load communication history from database (Railway) or JSON file (local dev)"""
+        self.communication_history = db.load_communication_history()
     
     def get_pending_approvals(self) -> List[Dict]:
         """Get all actions that require approval"""
