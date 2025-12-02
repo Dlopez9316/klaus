@@ -1354,6 +1354,28 @@ async def get_storage_info():
     }
 
 
+@app.get("/admin/email-config", response_model=dict)
+async def get_email_config():
+    """Get information about email configuration (no passwords)"""
+    smtp_user = os.getenv("SMTP_USER", "not set")
+    # Mask the email for security but show domain
+    if smtp_user and "@" in smtp_user:
+        parts = smtp_user.split("@")
+        masked_user = parts[0][:3] + "***@" + parts[1]
+    else:
+        masked_user = smtp_user
+
+    return {
+        "status": "success",
+        "smtp_host": os.getenv("SMTP_HOST", "smtp.gmail.com (default)"),
+        "smtp_port": os.getenv("SMTP_PORT", "587 (default)"),
+        "smtp_user": masked_user,
+        "smtp_password_set": bool(os.getenv("SMTP_PASSWORD")),
+        "klaus_from_email": os.getenv("KLAUS_FROM_EMAIL", "klaus@leveragelivelocal.com (default)"),
+        "klaus_smtp_active": klaus_smtp is not None
+    }
+
+
 # ============================================================================
 # STARTUP
 # ============================================================================

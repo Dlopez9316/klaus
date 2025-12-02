@@ -26,7 +26,10 @@ class KlausSMTPClient:
         self.imap_port = int(os.getenv("IMAP_PORT", "993"))
         self.smtp_user = os.getenv("SMTP_USER")
         self.smtp_password = os.getenv("SMTP_PASSWORD")
-        
+        # Use KLAUS_FROM_EMAIL if set, otherwise default to klaus@leveragelivelocal.com
+        self.from_email = os.getenv("KLAUS_FROM_EMAIL", "klaus@leveragelivelocal.com")
+        self.from_name = os.getenv("KLAUS_FROM_NAME", "Klaus")
+
         if not self.smtp_user or not self.smtp_password:
             raise ValueError("SMTP_USER and SMTP_PASSWORD environment variables required")
     
@@ -59,8 +62,9 @@ class KlausSMTPClient:
             # Create message
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
-            msg['From'] = self.smtp_user
+            msg['From'] = f"{self.from_name} <{self.from_email}>"
             msg['To'] = to_email
+            msg['Reply-To'] = self.from_email
             msg['Date'] = datetime.now().strftime("%a, %d %b %Y %H:%M:%S +0000")
             
             if cc:
@@ -98,13 +102,14 @@ class KlausSMTPClient:
                 server.send_message(msg)
             
             # Save to Sent folder via IMAP
-            self._save_to_sent(msg)
-            
+            saved_to_sent = self._save_to_sent(msg)
+
             return {
                 "status": "success",
                 "message_id": f"smtp-{datetime.now().strftime('%Y%m%d%H%M%S')}",
                 "to": to_email,
-                "subject": subject
+                "subject": subject,
+                "saved_to_sent": saved_to_sent
             }
             
         except smtplib.SMTPAuthenticationError as e:
@@ -126,26 +131,36 @@ class KlausSMTPClient:
     def _save_to_sent(self, msg: MIMEMultipart) -> bool:
         """Save email to Sent folder via IMAP"""
         try:
+            print(f"[IMAP] Connecting to {self.imap_host}:{self.imap_port}...")
+
             # Connect to IMAP
             imap = imaplib.IMAP4_SSL(self.imap_host, self.imap_port)
             imap.login(self.smtp_user, self.smtp_password)
-            
+            print("[IMAP] Login successful")
+
             # Select the Sent folder (Gmail uses "[Gmail]/Sent Mail")
             sent_folder = "[Gmail]/Sent Mail"
-            
+
             # Append message to Sent folder
-            imap.append(
+            result = imap.append(
                 sent_folder,
                 "\\Seen",
                 imaplib.Time2Internaldate(time.time()),
                 msg.as_bytes()
             )
-            
+            print(f"[IMAP] Append result: {result}")
+
             imap.logout()
+            print("[IMAP] ✓ Email saved to Sent folder")
             return True
-            
+
+        except imaplib.IMAP4.error as e:
+            print(f"⚠ [IMAP] IMAP error saving to Sent folder: {e}")
+            return False
         except Exception as e:
-            print(f"⚠ Failed to save to Sent folder: {e}")
+            print(f"⚠ [IMAP] Failed to save to Sent folder: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def _text_to_html(self, text: str, invoice_map: Optional[Dict[str, str]] = None) -> str:
