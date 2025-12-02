@@ -12,10 +12,18 @@ from contextlib import contextmanager
 # Check if we're on Railway (DATABASE_URL is set)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Track if database is actually working (not just configured)
+DATABASE_AVAILABLE = False
+
 if DATABASE_URL:
-    import psycopg2
-    from psycopg2.extras import RealDictCursor, Json
-    USE_DATABASE = True
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor, Json
+        USE_DATABASE = True
+    except ImportError:
+        USE_DATABASE = False
+        psycopg2 = None
+        print("Warning: psycopg2 not installed, using JSON files")
 else:
     USE_DATABASE = False
     psycopg2 = None
@@ -23,6 +31,8 @@ else:
 
 def get_connection():
     """Get a database connection"""
+    global DATABASE_AVAILABLE
+
     if not USE_DATABASE:
         return None
 
@@ -31,7 +41,14 @@ def get_connection():
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-    return psycopg2.connect(db_url)
+    try:
+        conn = psycopg2.connect(db_url, connect_timeout=5)
+        DATABASE_AVAILABLE = True
+        return conn
+    except Exception as e:
+        DATABASE_AVAILABLE = False
+        print(f"Database connection failed: {e}")
+        return None
 
 
 @contextmanager
@@ -42,16 +59,32 @@ def get_cursor():
         yield None
         return
 
+    cursor = None
     try:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         yield cursor
         conn.commit()
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         raise e
     finally:
-        cursor.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+
+def is_database_available():
+    """Check if database is currently available"""
+    if not USE_DATABASE:
+        return False
+    # Try a quick connection test
+    conn = get_connection()
+    if conn:
         conn.close()
+        return True
+    return False
 
 
 def init_database():
@@ -133,50 +166,58 @@ def load_memory() -> Dict:
         'accounted_transactions': []
     }
 
+    # Try database first if configured
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return default_memory
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("SELECT key, data FROM reconciliation_memory")
+                    rows = cursor.fetchall()
 
-            cursor.execute("SELECT key, data FROM reconciliation_memory")
-            rows = cursor.fetchall()
+                    if rows:
+                        memory = default_memory.copy()
+                        for row in rows:
+                            memory[row['key']] = row['data']
+                        return memory
+        except Exception as e:
+            print(f"Database read failed, falling back to JSON: {e}")
 
-            if not rows:
-                return default_memory
-
-            memory = default_memory.copy()
-            for row in rows:
-                memory[row['key']] = row['data']
-            return memory
-    else:
-        # Fallback to JSON file
-        if os.path.exists("memory.json"):
-            try:
-                with open("memory.json", 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        return default_memory
+    # Fallback to JSON file
+    if os.path.exists("memory.json"):
+        try:
+            with open("memory.json", 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return default_memory
 
 
 def save_memory(memory: Dict):
     """Save reconciliation memory to database or JSON file"""
-    if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+    saved_to_db = False
 
-            for key in ['associations', 'processor_patterns', 'denied_matches', 'accounted_transactions']:
-                if key in memory:
-                    cursor.execute("""
-                        INSERT INTO reconciliation_memory (key, data, updated_at)
-                        VALUES (%s, %s, NOW())
-                        ON CONFLICT (key) DO UPDATE SET data = %s, updated_at = NOW()
-                    """, (key, Json(memory[key]), Json(memory[key])))
-    else:
-        # Fallback to JSON file
+    if USE_DATABASE:
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    for key in ['associations', 'processor_patterns', 'denied_matches', 'accounted_transactions']:
+                        if key in memory:
+                            cursor.execute("""
+                                INSERT INTO reconciliation_memory (key, data, updated_at)
+                                VALUES (%s, %s, NOW())
+                                ON CONFLICT (key) DO UPDATE SET data = %s, updated_at = NOW()
+                            """, (key, Json(memory[key]), Json(memory[key])))
+                    saved_to_db = True
+        except Exception as e:
+            print(f"Database save failed, falling back to JSON: {e}")
+
+    # Always save to JSON as backup (or primary if DB failed)
+    try:
         with open("memory.json", 'w') as f:
             json.dump(memory, f, indent=2)
+    except Exception as e:
+        if not saved_to_db:
+            print(f"Warning: Could not save memory: {e}")
 
 
 # ==============================================================================
@@ -202,51 +243,58 @@ def load_klaus_config() -> Dict:
         'vip_contacts': []
     }
 
+    # Try database first if configured
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return default_config
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("SELECT config FROM klaus_config ORDER BY id DESC LIMIT 1")
+                    row = cursor.fetchone()
+                    if row:
+                        return row['config']
+        except Exception as e:
+            print(f"Database read failed for klaus_config, falling back to JSON: {e}")
 
-            cursor.execute("SELECT config FROM klaus_config ORDER BY id DESC LIMIT 1")
-            row = cursor.fetchone()
-
-            if row:
-                return row['config']
-            return default_config
-    else:
-        # Fallback to JSON file
-        if os.path.exists("klaus_config.json"):
-            try:
-                with open("klaus_config.json", 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        return default_config
+    # Fallback to JSON file
+    if os.path.exists("klaus_config.json"):
+        try:
+            with open("klaus_config.json", 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return default_config
 
 
 def save_klaus_config(config: Dict):
     """Save Klaus configuration to database or JSON file"""
+    saved_to_db = False
+
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("SELECT id FROM klaus_config LIMIT 1")
+                    row = cursor.fetchone()
 
-            # Check if config exists
-            cursor.execute("SELECT id FROM klaus_config LIMIT 1")
-            row = cursor.fetchone()
+                    if row:
+                        cursor.execute("""
+                            UPDATE klaus_config SET config = %s, updated_at = NOW() WHERE id = %s
+                        """, (Json(config), row['id']))
+                    else:
+                        cursor.execute("""
+                            INSERT INTO klaus_config (config, updated_at) VALUES (%s, NOW())
+                        """, (Json(config),))
+                    saved_to_db = True
+        except Exception as e:
+            print(f"Database save failed for klaus_config, falling back to JSON: {e}")
 
-            if row:
-                cursor.execute("""
-                    UPDATE klaus_config SET config = %s, updated_at = NOW() WHERE id = %s
-                """, (Json(config), row['id']))
-            else:
-                cursor.execute("""
-                    INSERT INTO klaus_config (config, updated_at) VALUES (%s, NOW())
-                """, (Json(config),))
-    else:
-        # Fallback to JSON file
+    # Always save to JSON as backup
+    try:
         with open("klaus_config.json", 'w') as f:
             json.dump(config, f, indent=2)
+    except Exception as e:
+        if not saved_to_db:
+            print(f"Warning: Could not save klaus_config: {e}")
 
 
 # ==============================================================================
@@ -255,99 +303,122 @@ def save_klaus_config(config: Dict):
 
 def load_communication_history() -> List[Dict]:
     """Load Klaus communication history from database or JSON file"""
+    # Try database first if configured
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return []
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("""
+                        SELECT invoice_id, company_name, method, message_type,
+                               sent_at, approved_by
+                        FROM communication_history
+                        ORDER BY sent_at DESC
+                    """)
+                    rows = cursor.fetchall()
 
-            cursor.execute("""
-                SELECT invoice_id, company_name, method, message_type,
-                       sent_at, approved_by
-                FROM communication_history
-                ORDER BY sent_at DESC
-            """)
-            rows = cursor.fetchall()
+                    history = []
+                    for row in rows:
+                        history.append({
+                            'invoice_id': row['invoice_id'],
+                            'company_name': row['company_name'],
+                            'method': row['method'],
+                            'message_type': row['message_type'],
+                            'sent_at': row['sent_at'].isoformat() if row['sent_at'] else None,
+                            'approved_by': row['approved_by']
+                        })
+                    return history
+        except Exception as e:
+            print(f"Database read failed for communication_history, falling back to JSON: {e}")
 
-            history = []
-            for row in rows:
-                history.append({
-                    'invoice_id': row['invoice_id'],
-                    'company_name': row['company_name'],
-                    'method': row['method'],
-                    'message_type': row['message_type'],
-                    'sent_at': row['sent_at'].isoformat() if row['sent_at'] else None,
-                    'approved_by': row['approved_by']
-                })
-            return history
-    else:
-        # Fallback to JSON file
-        if os.path.exists("klaus_communication_history.json"):
-            try:
-                with open("klaus_communication_history.json", 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        return []
+    # Fallback to JSON file
+    if os.path.exists("klaus_communication_history.json"):
+        try:
+            with open("klaus_communication_history.json", 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return []
 
 
 def save_communication_history(history: List[Dict]):
     """Save entire communication history (for migration)"""
+    saved_to_db = False
+
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    for entry in history:
+                        sent_at = entry.get('sent_at')
+                        if isinstance(sent_at, str):
+                            try:
+                                sent_at = datetime.fromisoformat(sent_at.replace('Z', '+00:00'))
+                            except:
+                                sent_at = datetime.now()
 
-            for entry in history:
-                sent_at = entry.get('sent_at')
-                if isinstance(sent_at, str):
-                    try:
-                        sent_at = datetime.fromisoformat(sent_at.replace('Z', '+00:00'))
-                    except:
-                        sent_at = datetime.now()
+                        cursor.execute("""
+                            INSERT INTO communication_history
+                            (invoice_id, company_name, method, message_type, sent_at, approved_by)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                        """, (
+                            entry.get('invoice_id'),
+                            entry.get('company_name'),
+                            entry.get('method'),
+                            entry.get('message_type'),
+                            sent_at,
+                            entry.get('approved_by')
+                        ))
+                    saved_to_db = True
+        except Exception as e:
+            print(f"Database save failed for communication_history: {e}")
 
-                cursor.execute("""
-                    INSERT INTO communication_history
-                    (invoice_id, company_name, method, message_type, sent_at, approved_by)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                """, (
-                    entry.get('invoice_id'),
-                    entry.get('company_name'),
-                    entry.get('method'),
-                    entry.get('message_type'),
-                    sent_at,
-                    entry.get('approved_by')
-                ))
-    else:
-        # Fallback to JSON file
+    # Always save to JSON as backup
+    try:
         with open("klaus_communication_history.json", 'w') as f:
             json.dump(history, f, indent=2)
+    except Exception as e:
+        if not saved_to_db:
+            print(f"Warning: Could not save communication_history: {e}")
 
 
 def add_communication(invoice_id: str, company_name: str, method: str,
                       message_type: str, approved_by: Optional[str] = None):
     """Add a single communication entry"""
-    if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+    entry = {
+        'invoice_id': invoice_id,
+        'company_name': company_name,
+        'method': method,
+        'message_type': message_type,
+        'sent_at': datetime.now().isoformat(),
+        'approved_by': approved_by
+    }
 
-            cursor.execute("""
-                INSERT INTO communication_history
-                (invoice_id, company_name, method, message_type, sent_at, approved_by)
-                VALUES (%s, %s, %s, %s, NOW(), %s)
-            """, (invoice_id, company_name, method, message_type, approved_by))
-    else:
-        # Fallback - load, append, save
-        history = load_communication_history()
-        history.append({
-            'invoice_id': invoice_id,
-            'company_name': company_name,
-            'method': method,
-            'message_type': message_type,
-            'sent_at': datetime.now().isoformat(),
-            'approved_by': approved_by
-        })
-        save_communication_history(history)
+    saved_to_db = False
+    if USE_DATABASE:
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("""
+                        INSERT INTO communication_history
+                        (invoice_id, company_name, method, message_type, sent_at, approved_by)
+                        VALUES (%s, %s, %s, %s, NOW(), %s)
+                    """, (invoice_id, company_name, method, message_type, approved_by))
+                    saved_to_db = True
+        except Exception as e:
+            print(f"Database add_communication failed: {e}")
+
+    # Always append to JSON as backup
+    try:
+        history = []
+        if os.path.exists("klaus_communication_history.json"):
+            with open("klaus_communication_history.json", 'r') as f:
+                history = json.load(f)
+        history.append(entry)
+        with open("klaus_communication_history.json", 'w') as f:
+            json.dump(history, f, indent=2)
+    except Exception as e:
+        if not saved_to_db:
+            print(f"Warning: Could not save communication entry: {e}")
 
 
 # ==============================================================================
@@ -356,84 +427,113 @@ def add_communication(invoice_id: str, company_name: str, method: str,
 
 def load_call_history() -> List[Dict]:
     """Load call history from database or JSON file"""
+    # Try database first if configured
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return []
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("SELECT call_id, call_data FROM call_history ORDER BY created_at DESC")
+                    rows = cursor.fetchall()
+                    return [row['call_data'] for row in rows]
+        except Exception as e:
+            print(f"Database read failed for call_history, falling back to JSON: {e}")
 
-            cursor.execute("SELECT call_id, call_data FROM call_history ORDER BY created_at DESC")
-            rows = cursor.fetchall()
-
-            return [row['call_data'] for row in rows]
-    else:
-        # Fallback to JSON file
-        if os.path.exists("klaus_call_history.json"):
-            try:
-                with open("klaus_call_history.json", 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        return []
+    # Fallback to JSON file
+    if os.path.exists("klaus_call_history.json"):
+        try:
+            with open("klaus_call_history.json", 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return []
 
 
 def save_call_history(history: List[Dict]):
     """Save entire call history (for migration)"""
-    if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+    saved_to_db = False
 
-            for call in history:
-                call_id = call.get('call_id') or call.get('id') or str(hash(json.dumps(call, default=str)))
-                cursor.execute("""
-                    INSERT INTO call_history (call_id, call_data)
-                    VALUES (%s, %s)
-                    ON CONFLICT (call_id) DO UPDATE SET call_data = %s
-                """, (call_id, Json(call), Json(call)))
-    else:
-        # Fallback to JSON file
+    if USE_DATABASE:
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    for call in history:
+                        call_id = call.get('call_id') or call.get('id') or str(hash(json.dumps(call, default=str)))
+                        cursor.execute("""
+                            INSERT INTO call_history (call_id, call_data)
+                            VALUES (%s, %s)
+                            ON CONFLICT (call_id) DO UPDATE SET call_data = %s
+                        """, (call_id, Json(call), Json(call)))
+                    saved_to_db = True
+        except Exception as e:
+            print(f"Database save failed for call_history: {e}")
+
+    # Always save to JSON as backup
+    try:
         with open("klaus_call_history.json", 'w') as f:
             json.dump(history, f, indent=2)
+    except Exception as e:
+        if not saved_to_db:
+            print(f"Warning: Could not save call_history: {e}")
 
 
 def add_call(call_data: Dict):
     """Add a single call entry"""
-    if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+    saved_to_db = False
 
-            call_id = call_data.get('call_id') or call_data.get('id') or str(datetime.now().timestamp())
-            cursor.execute("""
-                INSERT INTO call_history (call_id, call_data)
-                VALUES (%s, %s)
-                ON CONFLICT (call_id) DO UPDATE SET call_data = %s
-            """, (call_id, Json(call_data), Json(call_data)))
-    else:
-        # Fallback - load, append, save
-        history = load_call_history()
+    if USE_DATABASE:
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    call_id = call_data.get('call_id') or call_data.get('id') or str(datetime.now().timestamp())
+                    cursor.execute("""
+                        INSERT INTO call_history (call_id, call_data)
+                        VALUES (%s, %s)
+                        ON CONFLICT (call_id) DO UPDATE SET call_data = %s
+                    """, (call_id, Json(call_data), Json(call_data)))
+                    saved_to_db = True
+        except Exception as e:
+            print(f"Database add_call failed: {e}")
+
+    # Always append to JSON as backup
+    try:
+        history = []
+        if os.path.exists("klaus_call_history.json"):
+            with open("klaus_call_history.json", 'r') as f:
+                history = json.load(f)
         history.append(call_data)
-        save_call_history(history)
+        with open("klaus_call_history.json", 'w') as f:
+            json.dump(history, f, indent=2)
+    except Exception as e:
+        if not saved_to_db:
+            print(f"Warning: Could not save call entry: {e}")
 
 
 def update_call(call_id: str, call_data: Dict):
     """Update an existing call entry"""
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("""
+                        UPDATE call_history SET call_data = %s WHERE call_id = %s
+                    """, (Json(call_data), call_id))
+        except Exception as e:
+            print(f"Database update_call failed: {e}")
 
-            cursor.execute("""
-                UPDATE call_history SET call_data = %s WHERE call_id = %s
-            """, (Json(call_data), call_id))
-    else:
-        # Fallback - load, update, save
-        history = load_call_history()
+    # Also update JSON file
+    try:
+        history = []
+        if os.path.exists("klaus_call_history.json"):
+            with open("klaus_call_history.json", 'r') as f:
+                history = json.load(f)
         for i, call in enumerate(history):
             if call.get('call_id') == call_id or call.get('id') == call_id:
                 history[i] = call_data
                 break
-        save_call_history(history)
+        with open("klaus_call_history.json", 'w') as f:
+            json.dump(history, f, indent=2)
+    except Exception as e:
+        print(f"Warning: Could not update call in JSON: {e}")
 
 
 # ==============================================================================
@@ -444,51 +544,58 @@ def load_schedule_config() -> Dict:
     """Load schedule configuration from database or JSON file"""
     default_config = {'frequency': 'none', 'time': '09:00'}
 
+    # Try database first if configured
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return default_config
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("SELECT config FROM schedule_config ORDER BY id DESC LIMIT 1")
+                    row = cursor.fetchone()
+                    if row:
+                        return row['config']
+        except Exception as e:
+            print(f"Database read failed for schedule_config, falling back to JSON: {e}")
 
-            cursor.execute("SELECT config FROM schedule_config ORDER BY id DESC LIMIT 1")
-            row = cursor.fetchone()
-
-            if row:
-                return row['config']
-            return default_config
-    else:
-        # Fallback to JSON file
-        if os.path.exists("schedule_config.json"):
-            try:
-                with open("schedule_config.json", 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        return default_config
+    # Fallback to JSON file
+    if os.path.exists("schedule_config.json"):
+        try:
+            with open("schedule_config.json", 'r') as f:
+                return json.load(f)
+        except:
+            pass
+    return default_config
 
 
 def save_schedule_config(config: Dict):
     """Save schedule configuration to database or JSON file"""
+    saved_to_db = False
+
     if USE_DATABASE:
-        with get_cursor() as cursor:
-            if cursor is None:
-                return
+        try:
+            with get_cursor() as cursor:
+                if cursor is not None:
+                    cursor.execute("SELECT id FROM schedule_config LIMIT 1")
+                    row = cursor.fetchone()
 
-            # Check if config exists
-            cursor.execute("SELECT id FROM schedule_config LIMIT 1")
-            row = cursor.fetchone()
+                    if row:
+                        cursor.execute("""
+                            UPDATE schedule_config SET config = %s, updated_at = NOW() WHERE id = %s
+                        """, (Json(config), row['id']))
+                    else:
+                        cursor.execute("""
+                            INSERT INTO schedule_config (config, updated_at) VALUES (%s, NOW())
+                        """, (Json(config),))
+                    saved_to_db = True
+        except Exception as e:
+            print(f"Database save failed for schedule_config: {e}")
 
-            if row:
-                cursor.execute("""
-                    UPDATE schedule_config SET config = %s, updated_at = NOW() WHERE id = %s
-                """, (Json(config), row['id']))
-            else:
-                cursor.execute("""
-                    INSERT INTO schedule_config (config, updated_at) VALUES (%s, NOW())
-                """, (Json(config),))
-    else:
-        # Fallback to JSON file
+    # Always save to JSON as backup
+    try:
         with open("schedule_config.json", 'w') as f:
             json.dump(config, f)
+    except Exception as e:
+        if not saved_to_db:
+            print(f"Warning: Could not save schedule_config: {e}")
 
 
 # ==============================================================================
