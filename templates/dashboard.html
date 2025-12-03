@@ -738,37 +738,75 @@
         const escapedCompany = (m.company_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
         
         html += '<div class="mt-3 d-flex gap-2">';
-        html += '<button class="btn btn-success btn-sm" onclick="approveMatch(\'' + m.invoice_id + '\', \'' + (m.transaction_date || '') + '\', \'' + escapedDesc + '\', \'' + escapedCompany + '\')"><i class="bi bi-check-circle me-1"></i>Approve</button>';
-        html += '<button class="btn btn-danger btn-sm" onclick="denyMatch(\'' + m.invoice_id + '\', \'' + escapedDesc + '\')"><i class="bi bi-x-circle me-1"></i>Deny</button>';
+        html += '<button class="btn btn-success btn-sm" onclick="approveMatch(\'' + m.invoice_id + '\', \'' + (m.transaction_date || '') + '\', \'' + escapedDesc + '\', \'' + escapedCompany + '\', this)"><i class="bi bi-check-circle me-1"></i>Approve</button>';
+        html += '<button class="btn btn-danger btn-sm" onclick="denyMatch(\'' + m.invoice_id + '\', \'' + escapedDesc + '\', this)"><i class="bi bi-x-circle me-1"></i>Deny</button>';
         html += '</div>';
         html += '</div></div>';
       }
       container.innerHTML = html;
     }
 
-    async function approveMatch(invoiceId, transactionDate, transactionDesc, companyName) {
-      const response = await fetch('/approve-bulk', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          approvals: [{
-            invoice_id: invoiceId,
-            transaction_date: transactionDate,
-            transaction_description: transactionDesc,
-            company_name: companyName
-          }]
-        })
-      });
-      const result = await response.json();
-      alert(result.status === 'success' ? 'Match approved!' : 'Failed');
-      runReconciliation();
+    async function approveMatch(invoiceId, transactionDate, transactionDesc, companyName, buttonElement) {
+      // Find the card element and show immediate visual feedback
+      const card = buttonElement.closest('.match-card');
+      const buttons = card.querySelectorAll('button');
+      buttons.forEach(btn => btn.disabled = true);
+      buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+      try {
+        const response = await fetch('/approve-bulk', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            approvals: [{
+              invoice_id: invoiceId,
+              transaction_date: transactionDate,
+              transaction_description: transactionDesc,
+              company_name: companyName
+            }]
+          })
+        });
+        const result = await response.json();
+
+        if (result.status === 'success') {
+          // Show success and slide out
+          card.style.transition = 'all 0.3s ease';
+          card.style.background = '#d4edda';
+          card.style.borderLeftColor = '#28a745';
+          buttonElement.innerHTML = '<i class="bi bi-check-circle me-1"></i>Approved!';
+
+          setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(100px)';
+            card.style.maxHeight = card.offsetHeight + 'px';
+            setTimeout(() => {
+              card.style.maxHeight = '0';
+              card.style.padding = '0';
+              card.style.margin = '0';
+              card.style.overflow = 'hidden';
+              setTimeout(() => card.remove(), 200);
+            }, 150);
+          }, 400);
+
+          // Update counter
+          updateMatchCount(-1);
+        } else {
+          buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed';
+          buttons.forEach(btn => btn.disabled = false);
+        }
+      } catch(e) {
+        buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
+        buttons.forEach(btn => btn.disabled = false);
+      }
     }
 
-    async function denyMatch(invoiceId, transactionDesc) {
-      if (!confirm('Deny this match? It will not be suggested again for this exact transaction.')) {
-        return;
-      }
-      
+    async function denyMatch(invoiceId, transactionDesc, buttonElement) {
+      // Find the card element and show immediate visual feedback
+      const card = buttonElement.closest('.match-card');
+      const buttons = card.querySelectorAll('button');
+      buttons.forEach(btn => btn.disabled = true);
+      buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
       try {
         const response = await fetch('/deny', {
           method: 'POST',
@@ -779,15 +817,45 @@
           })
         });
         const result = await response.json();
-        
+
         if (result.status === 'success') {
-          alert('✓ Match denied and recorded. This pairing won\'t be suggested again.');
-          runReconciliation();
+          // Show denied and slide out
+          card.style.transition = 'all 0.3s ease';
+          card.style.background = '#f8d7da';
+          card.style.borderLeftColor = '#dc3545';
+          buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Denied!';
+
+          setTimeout(() => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateX(-100px)';
+            card.style.maxHeight = card.offsetHeight + 'px';
+            setTimeout(() => {
+              card.style.maxHeight = '0';
+              card.style.padding = '0';
+              card.style.margin = '0';
+              card.style.overflow = 'hidden';
+              setTimeout(() => card.remove(), 200);
+            }, 150);
+          }, 400);
+
+          // Update counter
+          updateMatchCount(-1);
         } else {
-          alert('Failed to deny match: ' + (result.message || 'Unknown error'));
+          buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed';
+          buttons.forEach(btn => btn.disabled = false);
         }
       } catch(e) {
-        alert('Error denying match: ' + e.message);
+        buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
+        buttons.forEach(btn => btn.disabled = false);
+      }
+    }
+
+    function updateMatchCount(delta) {
+      // Update the matches count in the header
+      const countBadge = document.querySelector('#matches-list')?.closest('.card')?.querySelector('.badge');
+      if (countBadge) {
+        const current = parseInt(countBadge.innerText) || 0;
+        countBadge.innerText = Math.max(0, current + delta);
       }
     }
 
@@ -901,6 +969,9 @@
       const response = await fetch('/schedule');
       const result = await response.json();
       document.getElementById('schedule-status').innerText = result.frequency || 'Not Set';
+      // Also populate the form fields
+      document.getElementById('frequency').value = result.frequency || 'none';
+      document.getElementById('schedule-time').value = result.time || '09:00';
     }
 
     async function checkNotificationStatus() {
