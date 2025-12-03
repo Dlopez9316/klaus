@@ -79,13 +79,24 @@ notification_service = NotificationService()
 # Klaus clients
 klaus_engine = KlausEngine(config_path="klaus_config.json")
 
-# Initialize Klaus Gmail (only if credentials are available)
+# Initialize Klaus Gmail (supports env vars or file-based credentials)
 try:
-    klaus_gmail = KlausGmailClient(credentials_file="klaus_credentials.json")
-    klaus_email_responder = KlausEmailResponder(
-        anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
-    )
-    print("✓ Klaus Gmail initialized")
+    # Check if we have env var credentials (Railway) or file credentials (local)
+    has_env_creds = all([
+        os.getenv('GMAIL_REFRESH_TOKEN'),
+        os.getenv('GMAIL_CLIENT_ID'),
+        os.getenv('GMAIL_CLIENT_SECRET')
+    ])
+    has_file_creds = os.path.exists("klaus_credentials.json")
+
+    if has_env_creds or has_file_creds:
+        klaus_gmail = KlausGmailClient(credentials_file="klaus_credentials.json")
+        klaus_email_responder = KlausEmailResponder(
+            anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
+        )
+        print("✓ Klaus Gmail initialized")
+    else:
+        raise Exception("No Gmail credentials found (neither env vars nor file)")
 except Exception as e:
     klaus_gmail = None
     klaus_email_responder = None

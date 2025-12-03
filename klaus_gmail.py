@@ -107,41 +107,64 @@ class KlausGmailClient:
     """
     Gmail client for Klaus collections agent
     NOW SUPPORTS HTML EMAILS WITH HYPERLINKED INVOICES
+    Supports both file-based credentials and environment variables (for Railway)
     """
-    
+
     SCOPES = [
         'https://www.googleapis.com/auth/gmail.send',
         'https://www.googleapis.com/auth/gmail.readonly',
         'https://www.googleapis.com/auth/gmail.modify'
     ]
-    
+
     def __init__(self, credentials_file: str = "klaus_credentials.json"):
         self.credentials_file = credentials_file
         self.token_file = "klaus_token.pickle"
         self.service = None
         self._authenticate()
-    
+
     def _authenticate(self):
-        """Authenticate with Gmail API"""
+        """Authenticate with Gmail API - supports env vars or file-based credentials"""
         creds = None
-        
-        if os.path.exists(self.token_file):
-            with open(self.token_file, 'rb') as token:
-                creds = pickle.load(token)
-        
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    self.credentials_file, self.SCOPES
-                )
-                creds = flow.run_local_server(port=0)
-            
-            with open(self.token_file, 'wb') as token:
-                pickle.dump(creds, token)
-        
+
+        # Check for environment variables first (Railway deployment)
+        refresh_token = os.getenv('GMAIL_REFRESH_TOKEN')
+        client_id = os.getenv('GMAIL_CLIENT_ID')
+        client_secret = os.getenv('GMAIL_CLIENT_SECRET')
+
+        if refresh_token and client_id and client_secret:
+            print("[GMAIL] Using credentials from environment variables")
+            creds = Credentials(
+                token=None,
+                refresh_token=refresh_token,
+                token_uri='https://oauth2.googleapis.com/token',
+                client_id=client_id,
+                client_secret=client_secret,
+                scopes=self.SCOPES
+            )
+            # Refresh to get a valid access token
+            creds.refresh(Request())
+            print("[GMAIL] ✓ Credentials refreshed successfully")
+        else:
+            # Fall back to file-based credentials (local development)
+            print("[GMAIL] Using file-based credentials")
+            if os.path.exists(self.token_file):
+                with open(self.token_file, 'rb') as token:
+                    creds = pickle.load(token)
+
+            if not creds or not creds.valid:
+                if creds and creds.expired and creds.refresh_token:
+                    creds.refresh(Request())
+                else:
+                    flow = InstalledAppFlow.from_client_secrets_file(
+                        self.credentials_file, self.SCOPES
+                    )
+                    creds = flow.run_local_server(port=0)
+
+                with open(self.token_file, 'wb') as token:
+                    pickle.dump(creds, token)
+
         self.service = build('gmail', 'v1', credentials=creds)
+        print("[GMAIL] ✓ Gmail service initialized")
     
     def send_email(
         self,
