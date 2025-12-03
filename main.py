@@ -1373,6 +1373,28 @@ async def get_storage_info():
     }
 
 
+@app.get("/admin/invoice-properties", response_model=dict)
+async def get_invoice_properties():
+    """Debug endpoint - get all properties from a sample invoice"""
+    try:
+        from hubspot import HubSpot
+        client = HubSpot(access_token=os.getenv("HUBSPOT_API_KEY"))
+
+        # Get one invoice with ALL properties
+        invoices = client.crm.invoices.basic_api.get_page(limit=1)
+
+        if invoices.results:
+            invoice = invoices.results[0]
+            return {
+                "status": "success",
+                "invoice_id": invoice.id,
+                "properties": dict(invoice.properties) if invoice.properties else {}
+            }
+        return {"status": "no_invoices"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
 @app.get("/admin/email-config", response_model=dict)
 async def get_email_config():
     """Get information about email configuration (no passwords)"""
