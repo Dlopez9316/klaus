@@ -6,64 +6,253 @@
     <title>Klaus Collections Agent</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #f5f5f5; }
-        .navbar { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); }
-        .card { border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .card-header { background: #fff; border-bottom: 2px solid #f0f0f0; font-weight: 600; }
-        .stat-card { text-align: center; padding: 20px; }
-        .stat-value { font-size: 2.5rem; font-weight: bold; color: #2c3e50; }
-        .stat-label { color: #7f8c8d; font-size: 0.9rem; }
-        .email-preview { background: #fafafa; border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #3498db; }
-        .email-preview.vip { border-left-color: #9b59b6; }
-        .email-preview.approval { border-left-color: #f39c12; }
-        .badge-vip { background: #9b59b6; }
-        .badge-autonomous { background: #27ae60; }
-        .badge-approval { background: #f39c12; }
-        .btn-klaus { background: #2c3e50; color: white; }
-        .btn-klaus:hover { background: #34495e; color: white; }
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --card-2: #f1f5f9;
+            --text: #334155;
+            --text-strong: #1e293b;
+            --muted: #64748b;
+            --primary: #6366f1;
+            --primary-strong: #4f46e5;
+            --primary-light: #eef2ff;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+            --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
+            --radius: 16px;
+            --border: #e2e8f0;
+            --vip: #8b5cf6;
+            --vip-light: #ede9fe;
+        }
+        * { font-family: Inter, system-ui, -apple-system, sans-serif; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
+        .navbar-brand {
+            color: var(--text-strong) !important;
+            font-weight: 700;
+        }
+
+        /* Cards */
+        .card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            background: var(--card);
+        }
+        .card-header {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            color: var(--text-strong);
+            padding: 1rem 1.25rem;
+        }
+
+        /* Stats */
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            transition: all 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-strong);
+        }
+        .stat-label {
+            color: var(--muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+
+        /* Email cards */
+        .email-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        .email-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        .email-card.vip { border-left-color: var(--vip); }
+        .email-card.approval { border-left-color: var(--warning); }
+        .email-card.escalation-1 { border-left-color: var(--success); }
+        .email-card.escalation-2 { border-left-color: #eab308; }
+        .email-card.escalation-3 { border-left-color: var(--warning); }
+        .email-card.escalation-4 { border-left-color: #f97316; }
+        .email-card.escalation-5 { border-left-color: var(--danger); }
+
+        /* Badges */
+        .badge-vip {
+            background: var(--vip-light);
+            color: var(--vip);
+            font-weight: 600;
+        }
+        .badge-level {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        .badge-days {
+            background: var(--card-2);
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background: var(--primary-strong);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+        .btn-success {
+            background: var(--success);
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        .btn-outline-secondary {
+            border-color: var(--border);
+            color: var(--text);
+            border-radius: 10px;
+        }
+        .btn-outline-secondary:hover {
+            background: var(--card-2);
+            border-color: var(--border);
+            color: var(--text-strong);
+        }
+        .btn-outline-primary {
+            border-color: var(--primary);
+            color: var(--primary);
+            border-radius: 8px;
+        }
+        .btn-outline-primary:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Loading */
         .loading { display: none; }
-        .escalation-1 { border-left-color: #27ae60; }
-        .escalation-2 { border-left-color: #f1c40f; }
-        .escalation-3 { border-left-color: #e67e22; }
-        .escalation-4 { border-left-color: #e74c3c; }
-        .escalation-5 { border-left-color: #c0392b; }
+        .loading.show { display: flex; align-items: center; gap: 0.5rem; }
+
+        /* Modal */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+        }
+        .modal-footer {
+            border-top: 1px solid var(--border);
+        }
+        .email-body-preview {
+            background: var(--card-2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* History table */
+        .table {
+            color: var(--text);
+        }
+        .table th {
+            color: var(--text-strong);
+            font-weight: 600;
+            border-bottom-color: var(--border);
+        }
+        .table td {
+            border-bottom-color: var(--border);
+            vertical-align: middle;
+        }
+
+        /* Text utilities */
+        .text-muted { color: var(--muted) !important; }
+        strong { color: var(--text-strong); }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--card-2); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-dark mb-4">
+    <nav class="navbar mb-4">
         <div class="container">
             <span class="navbar-brand mb-0 h1">
                 <i class="bi bi-robot me-2"></i>Klaus Collections Agent
             </span>
-            <a href="/" class="btn btn-outline-light btn-sm">
+            <a href="/" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i>Back to Reconciliation
             </a>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container pb-5">
         <!-- Stats Row -->
-        <div class="row mb-4">
-            <div class="col-md-3">
+        <div class="row mb-4 g-3">
+            <div class="col-6 col-md-3">
                 <div class="card stat-card">
                     <div class="stat-value" id="stat-overdue">-</div>
                     <div class="stat-label">Overdue Invoices</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="card stat-card">
                     <div class="stat-value" id="stat-amount">-</div>
                     <div class="stat-label">Total Outstanding</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="card stat-card">
                     <div class="stat-value" id="stat-autonomous">-</div>
                     <div class="stat-label">Ready to Send</div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-6 col-md-3">
                 <div class="card stat-card">
                     <div class="stat-value" id="stat-approval">-</div>
                     <div class="stat-label">Need Approval</div>
@@ -72,57 +261,51 @@
         </div>
 
         <!-- Main Actions -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-lightning-charge me-2"></i>Actions</span>
-                    </div>
-                    <div class="card-body">
-                        <button class="btn btn-klaus btn-lg me-2" onclick="analyzeInvoices()">
-                            <i class="bi bi-search me-2"></i>Analyze Overdue Invoices
-                        </button>
-                        <button class="btn btn-success btn-lg me-2" onclick="sendAutonomousEmails()" id="btn-send" disabled>
-                            <i class="bi bi-send me-2"></i>Send Autonomous Emails
-                        </button>
-                        <button class="btn btn-outline-secondary" onclick="loadHistory()">
-                            <i class="bi bi-clock-history me-2"></i>View History
-                        </button>
-                        <div class="loading mt-3" id="loading">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <span class="ms-2">Processing...</span>
-                        </div>
-                    </div>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-lightning-charge me-2"></i>Actions</span>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-primary btn-lg me-2" onclick="analyzeInvoices()" id="btn-analyze">
+                    <i class="bi bi-search me-2"></i>Analyze Overdue Invoices
+                </button>
+                <button class="btn btn-success btn-lg me-2" onclick="sendAutonomousEmails()" id="btn-send" disabled>
+                    <i class="bi bi-send me-2"></i>Send Autonomous Emails
+                </button>
+                <button class="btn btn-outline-secondary" onclick="loadHistory()">
+                    <i class="bi bi-clock-history me-2"></i>View History
+                </button>
+                <div class="loading mt-3" id="loading">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <span class="text-muted">Analyzing invoices...</span>
                 </div>
             </div>
         </div>
 
         <!-- Results -->
-        <div class="row">
+        <div class="row g-4">
             <!-- Autonomous Emails -->
             <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-check-circle text-success me-2"></i>Autonomous Emails
-                        <span class="badge bg-success ms-2" id="count-autonomous">0</span>
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-check-circle text-success me-2"></i>Autonomous Emails</span>
+                        <span class="badge bg-success" id="count-autonomous">0</span>
                     </div>
-                    <div class="card-body" id="autonomous-list" style="max-height: 500px; overflow-y: auto;">
-                        <p class="text-muted">Click "Analyze" to see emails ready to send</p>
+                    <div class="card-body" id="autonomous-list" style="max-height: 600px; overflow-y: auto;">
+                        <p class="text-muted text-center py-4">Click "Analyze" to see emails ready to send</p>
                     </div>
                 </div>
             </div>
 
             <!-- Approval Required -->
             <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>Requires Approval
-                        <span class="badge bg-warning text-dark ms-2" id="count-approval">0</span>
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-exclamation-triangle text-warning me-2"></i>Requires Approval</span>
+                        <span class="badge bg-warning text-dark" id="count-approval">0</span>
                     </div>
-                    <div class="card-body" id="approval-list" style="max-height: 500px; overflow-y: auto;">
-                        <p class="text-muted">VIP clients and high-value invoices appear here</p>
+                    <div class="card-body" id="approval-list" style="max-height: 600px; overflow-y: auto;">
+                        <p class="text-muted text-center py-4">VIP clients and high-value invoices appear here</p>
                     </div>
                 </div>
             </div>
@@ -132,8 +315,11 @@
         <div class="row mt-4" id="history-section" style="display: none;">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-clock-history me-2"></i>Communication History
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-clock-history me-2"></i>Communication History</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('history-section').style.display='none'">
+                            <i class="bi bi-x"></i>
+                        </button>
                     </div>
                     <div class="card-body" id="history-list" style="max-height: 400px; overflow-y: auto;">
                     </div>
@@ -144,29 +330,32 @@
 
     <!-- Email Preview Modal -->
     <div class="modal fade" id="emailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Email Preview</h5>
+                    <h5 class="modal-title"><i class="bi bi-envelope me-2"></i>Email Preview</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <strong>To:</strong> <span id="modal-to"></span>
+                    <div class="row mb-3">
+                        <div class="col-sm-2"><strong>To:</strong></div>
+                        <div class="col-sm-10" id="modal-to"></div>
                     </div>
-                    <div class="mb-3">
-                        <strong>Subject:</strong> <span id="modal-subject"></span>
+                    <div class="row mb-3">
+                        <div class="col-sm-2"><strong>Subject:</strong></div>
+                        <div class="col-sm-10" id="modal-subject"></div>
                     </div>
-                    <div class="mb-3">
-                        <strong>CC:</strong> <span id="modal-cc"></span>
+                    <div class="row mb-3">
+                        <div class="col-sm-2"><strong>CC:</strong></div>
+                        <div class="col-sm-10" id="modal-cc"></div>
                     </div>
                     <hr>
-                    <div id="modal-body" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 15px; border-radius: 5px;"></div>
+                    <div id="modal-body" class="email-body-preview"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="modal-send-btn" onclick="sendSingleEmail()">
-                        <i class="bi bi-send me-1"></i>Send This Email
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="modal-send-btn" onclick="sendFromModal()">
+                        <i class="bi bi-send me-1"></i>Approve & Send
                     </button>
                 </div>
             </div>
@@ -179,31 +368,34 @@
         let currentEmailData = null;
 
         async function analyzeInvoices() {
-            document.getElementById('loading').style.display = 'block';
+            const btn = document.getElementById('btn-analyze');
+            const loading = document.getElementById('loading');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyzing...';
+            loading.classList.add('show');
             document.getElementById('btn-send').disabled = true;
-            
+
             try {
-                const response = await fetch('/klaus/analyze', { 
+                const response = await fetch('/klaus/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ days_overdue_min: 7, include_vip: true })
                 });
                 const result = await response.json();
-                
+
                 if (!response.ok) {
                     throw new Error(result.detail || 'Failed to analyze');
                 }
-                
-                // Data is wrapped in 'analysis' key
+
                 const data = result.analysis || result;
                 analysisResults = data;
-                
-                // Update stats
-                document.getElementById('stat-overdue').textContent = data.total_analyzed || 0;
-                document.getElementById('stat-autonomous').textContent = data.autonomous_emails?.length || 0;
-                document.getElementById('stat-approval').textContent = data.pending_approvals?.length || 0;
-                
-                // Calculate total amount
+
+                // Update stats with animation
+                animateValue('stat-overdue', data.total_analyzed || 0);
+                animateValue('stat-autonomous', data.autonomous_emails?.length || 0);
+                animateValue('stat-approval', data.pending_approvals?.length || 0);
+
                 let totalAmount = 0;
                 if (data.autonomous_emails) {
                     data.autonomous_emails.forEach(e => totalAmount += e.total_balance || 0);
@@ -212,69 +404,72 @@
                     data.pending_approvals.forEach(e => totalAmount += e.total_balance || 0);
                 }
                 document.getElementById('stat-amount').textContent = '$' + totalAmount.toLocaleString();
-                
-                // Update counts
+
                 document.getElementById('count-autonomous').textContent = data.autonomous_emails?.length || 0;
                 document.getElementById('count-approval').textContent = data.pending_approvals?.length || 0;
-                
-                // Render autonomous emails
+
                 renderEmailList('autonomous-list', data.autonomous_emails || [], false);
-                
-                // Render approval emails
                 renderEmailList('approval-list', data.pending_approvals || [], true);
-                
-                // Enable send button if there are autonomous emails
+
                 if (data.autonomous_emails && data.autonomous_emails.length > 0) {
                     document.getElementById('btn-send').disabled = false;
                 }
-                
+
             } catch (error) {
                 alert('Error analyzing invoices: ' + error.message);
             }
-            
-            document.getElementById('loading').style.display = 'none';
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-search me-2"></i>Analyze Overdue Invoices';
+            loading.classList.remove('show');
+        }
+
+        function animateValue(id, value) {
+            const el = document.getElementById(id);
+            el.textContent = value;
+            el.style.transform = 'scale(1.1)';
+            setTimeout(() => el.style.transform = 'scale(1)', 200);
         }
 
         function renderEmailList(containerId, emails, requiresApproval) {
             const container = document.getElementById(containerId);
-            
+
             if (!emails || emails.length === 0) {
-                container.innerHTML = '<p class="text-muted">No emails in this category</p>';
+                container.innerHTML = '<p class="text-muted text-center py-4">No emails in this category</p>';
                 return;
             }
-            
+
             let html = '';
             emails.forEach((email, index) => {
                 const escalationClass = `escalation-${email.escalation_level || 1}`;
-                const vipBadge = email.is_vip ? '<span class="badge badge-vip">VIP</span>' : '';
-                
+                const vipClass = email.is_vip ? 'vip' : '';
+                const vipBadge = email.is_vip ? '<span class="badge badge-vip ms-2">VIP</span>' : '';
+
                 html += `
-                    <div class="email-preview ${escalationClass} ${requiresApproval ? 'approval' : ''}">
-                        <div class="d-flex justify-content-between align-items-start">
+                    <div class="email-card ${escalationClass} ${vipClass}" id="email-${requiresApproval ? 'approval' : 'auto'}-${index}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
-                                <strong>${email.contact_name || 'Unknown'}</strong> ${vipBadge}
+                                <strong>${email.contact_name || 'Unknown'}</strong>${vipBadge}
                                 <br><small class="text-muted">${email.contact_email || ''}</small>
                             </div>
                             <div class="text-end">
-                                <strong>$${(email.total_balance || 0).toLocaleString()}</strong>
+                                <strong style="font-size: 1.1rem;">$${(email.total_balance || 0).toLocaleString()}</strong>
                                 <br><small class="text-muted">${email.invoice_count || 0} invoice(s)</small>
                             </div>
                         </div>
-                        <div class="mt-2">
-                            <small>
-                                <span class="badge bg-secondary">${email.oldest_days_overdue || 0} days overdue</span>
-                                <span class="badge bg-info">Level ${email.escalation_level || 1}</span>
-                            </small>
+                        <div class="mb-2">
+                            <span class="badge badge-days me-1">${email.oldest_days_overdue || 0} days overdue</span>
+                            <span class="badge badge-level">Level ${email.escalation_level || 1}</span>
                         </div>
-                        <div class="mt-2">
-                            <small class="text-muted">Companies: ${(email.companies || []).join(', ')}</small>
+                        <div class="mb-3">
+                            <small class="text-muted">${(email.companies || []).join(', ')}</small>
                         </div>
-                        <div class="mt-2">
+                        <div class="d-flex gap-2">
                             <button class="btn btn-sm btn-outline-primary" onclick="previewEmail(${index}, ${requiresApproval})">
                                 <i class="bi bi-eye me-1"></i>Preview
                             </button>
                             ${requiresApproval ? `
-                                <button class="btn btn-sm btn-success" onclick="approveAndSend(${index})">
+                                <button class="btn btn-sm btn-success" onclick="approveAndSend(${index}, this)">
                                     <i class="bi bi-check me-1"></i>Approve & Send
                                 </button>
                             ` : ''}
@@ -282,52 +477,37 @@
                     </div>
                 `;
             });
-            
+
             container.innerHTML = html;
         }
 
         function previewEmail(index, isApproval) {
             const emails = isApproval ? analysisResults.pending_approvals : analysisResults.autonomous_emails;
             const email = emails[index];
-            
+
             currentEmailData = { ...email, index, isApproval };
-            
+
             document.getElementById('modal-to').textContent = `${email.contact_name} <${email.contact_email}>`;
             document.getElementById('modal-cc').textContent = email.is_vip ? 'daniel@leveragelivelocal.com' : '(none)';
-            
-            // Get the full message
+
             const message = email.recommended_message || 'No message generated';
-            
-            // Parse subject from message - handle various newline formats
+            const normalizedMessage = message.replace(/\r\n/g, '\n');
+
             let subject = 'Payment Reminder';
             let body = message;
-            
-            // Normalize newlines
-            const normalizedMessage = message.replace(/\r\n/g, '\n');
-            
+
             if (normalizedMessage.startsWith('Subject:')) {
-                // Find the first blank line (double newline)
                 const firstBlankLine = normalizedMessage.indexOf('\n\n');
                 if (firstBlankLine > -1) {
                     subject = normalizedMessage.substring(0, firstBlankLine).replace('Subject:', '').trim();
                     body = normalizedMessage.substring(firstBlankLine + 2);
-                } else {
-                    subject = normalizedMessage.replace('Subject:', '').trim();
-                    body = '(No body content)';
                 }
             }
-            
+
             document.getElementById('modal-subject').textContent = subject;
             document.getElementById('modal-body').textContent = body;
-            
-            // Debug: log to console
-            console.log('Full message:', message);
-            console.log('Subject:', subject);
-            console.log('Body length:', body.length);
-            
-            // Show/hide send button based on approval status
             document.getElementById('modal-send-btn').style.display = isApproval ? 'inline-block' : 'none';
-            
+
             new bootstrap.Modal(document.getElementById('emailModal')).show();
         }
 
@@ -336,124 +516,126 @@
                 alert('No emails to send. Run analysis first.');
                 return;
             }
-            
-            if (!confirm(`Send ${analysisResults.autonomous_emails.length} autonomous emails now?`)) {
+
+            const count = analysisResults.autonomous_emails.length;
+            if (!confirm(`Send ${count} autonomous email${count > 1 ? 's' : ''} now?`)) {
                 return;
             }
-            
-            document.getElementById('loading').style.display = 'block';
-            
+
+            const btn = document.getElementById('btn-send');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+
             let sent = 0;
             let errors = [];
-            
-            for (const email of analysisResults.autonomous_emails) {
+
+            for (let i = 0; i < analysisResults.autonomous_emails.length; i++) {
+                const email = analysisResults.autonomous_emails[i];
+                const card = document.getElementById(`email-auto-${i}`);
+
                 try {
-                    // Parse subject from message
-                    const message = email.recommended_message || '';
-                    const normalizedMessage = message.replace(/\r\n/g, '\n');
-                    
-                    let subject = 'Payment Reminder';
-                    let body = normalizedMessage;
-                    
-                    if (normalizedMessage.startsWith('Subject:')) {
-                        const firstBlankLine = normalizedMessage.indexOf('\n\n');
-                        if (firstBlankLine > -1) {
-                            subject = normalizedMessage.substring(0, firstBlankLine).replace('Subject:', '').trim();
-                            body = normalizedMessage.substring(firstBlankLine + 2);
-                        }
-                    }
-                    
-                    // Get first invoice ID from the invoices array
-                    const firstInvoice = email.invoices && email.invoices[0];
-                    const invoiceId = firstInvoice ? String(firstInvoice.invoice_id || firstInvoice.id || 'unknown') : 'unknown';
-                    
-                    // Validate required fields
-                    if (!email.contact_email || !email.contact_name) {
-                        errors.push(`${email.contact_name || 'Unknown'}: Missing email or name`);
-                        continue;
-                    }
-                    
-                    // Build invoice_map for hyperlinking invoice numbers in the email
-                    const invoiceMap = {};
-                    if (email.invoices && email.invoices.length > 0) {
-                        email.invoices.forEach(inv => {
-                            let invNumber = String(inv.invoice_number || '').trim();
-                            // Strip "INV-" prefix if present
-                            if (invNumber.toUpperCase().startsWith('INV-')) {
-                                invNumber = invNumber.substring(4).trim();
-                            }
-                            const hubspotUrl = inv.hubspot_url || '';
-                            if (invNumber && hubspotUrl) {
-                                invoiceMap[invNumber] = hubspotUrl;
-                            }
-                        });
-                    }
-
-                    const requestBody = {
-                        invoice_id: invoiceId,
-                        to_email: email.contact_email,
-                        to_name: email.contact_name,
-                        subject: subject,
-                        body: body,
-                        invoice_map: Object.keys(invoiceMap).length > 0 ? invoiceMap : null
-                    };
-
-                    // Only add cc if it's a VIP
-                    if (email.is_vip) {
-                        requestBody.cc = 'daniel@leveragelivelocal.com';
-                    }
-                    
-                    console.log('Sending email:', requestBody);
-                    
-                    const response = await fetch('/klaus/email/send', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestBody)
-                    });
-                    
-                    if (response.ok) {
+                    const result = await sendEmail(email);
+                    if (result.success) {
                         sent++;
-                    } else {
-                        const err = await response.json();
-                        // Handle FastAPI validation errors which come as an array
-                        let errorMsg = 'Unknown error';
-                        if (err.detail) {
-                            if (Array.isArray(err.detail)) {
-                                errorMsg = err.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
-                            } else if (typeof err.detail === 'string') {
-                                errorMsg = err.detail;
-                            } else {
-                                errorMsg = JSON.stringify(err.detail);
-                            }
+                        if (card) {
+                            card.style.background = 'var(--success-light)';
+                            card.style.borderLeftColor = 'var(--success)';
+                            setTimeout(() => {
+                                card.style.opacity = '0';
+                                card.style.transform = 'translateX(50px)';
+                                setTimeout(() => card.remove(), 300);
+                            }, 500);
                         }
-                        errors.push(`${email.contact_name}: ${errorMsg}`);
+                    } else {
+                        errors.push(`${email.contact_name}: ${result.error}`);
+                        if (card) {
+                            card.style.background = 'var(--danger-light)';
+                        }
                     }
                 } catch (e) {
                     errors.push(`${email.contact_name}: ${e.message}`);
                 }
             }
-            
-            document.getElementById('loading').style.display = 'none';
-            
-            let message = `✅ Sent ${sent} emails successfully.`;
+
+            btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Autonomous Emails';
+
+            let message = `Sent ${sent} of ${count} emails.`;
             if (errors.length > 0) {
-                message += `\n\n❌ ${errors.length} errors:\n${errors.join('\n')}`;
+                message += `\n\nErrors:\n${errors.join('\n')}`;
             }
-            
+
             alert(message);
-            
-            // Refresh analysis
-            analyzeInvoices();
+
+            // Update counts
+            document.getElementById('count-autonomous').textContent = '0';
+            document.getElementById('stat-autonomous').textContent = '0';
         }
 
-        async function approveAndSend(index) {
+        async function approveAndSend(index, buttonElement) {
             const email = analysisResults.pending_approvals[index];
+            const card = document.getElementById(`email-approval-${index}`);
 
-            if (!confirm(`Send email to ${email.contact_name} (${email.contact_email})?`)) {
-                return;
+            // Disable button and show loading
+            if (buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
             }
 
-            // Parse subject from message
+            try {
+                const result = await sendEmail(email);
+
+                if (result.success) {
+                    // Visual feedback - success
+                    if (card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.background = 'var(--success-light)';
+                        card.style.borderLeftColor = 'var(--success)';
+                        if (buttonElement) {
+                            buttonElement.innerHTML = '<i class="bi bi-check-circle me-1"></i>Sent!';
+                            buttonElement.classList.remove('btn-success');
+                            buttonElement.classList.add('btn-outline-success');
+                        }
+
+                        setTimeout(() => {
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateX(50px)';
+                            card.style.maxHeight = card.offsetHeight + 'px';
+                            setTimeout(() => {
+                                card.style.maxHeight = '0';
+                                card.style.padding = '0';
+                                card.style.margin = '0';
+                                card.style.overflow = 'hidden';
+                                setTimeout(() => card.remove(), 200);
+                            }, 150);
+                        }, 600);
+
+                        // Update counter
+                        const countEl = document.getElementById('count-approval');
+                        const current = parseInt(countEl.textContent) || 0;
+                        countEl.textContent = Math.max(0, current - 1);
+                        document.getElementById('stat-approval').textContent = Math.max(0, current - 1);
+                    }
+                } else {
+                    // Visual feedback - error
+                    if (card) {
+                        card.style.background = 'var(--danger-light)';
+                    }
+                    if (buttonElement) {
+                        buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed';
+                        buttonElement.disabled = false;
+                    }
+                    alert('Failed to send: ' + result.error);
+                }
+            } catch (e) {
+                if (buttonElement) {
+                    buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
+                    buttonElement.disabled = false;
+                }
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function sendEmail(email) {
             const message = email.recommended_message || '';
             const normalizedMessage = message.replace(/\r\n/g, '\n');
 
@@ -468,16 +650,14 @@
                 }
             }
 
-            // Get first invoice ID from the invoices array
             const firstInvoice = email.invoices && email.invoices[0];
             const invoiceId = firstInvoice ? String(firstInvoice.invoice_id || firstInvoice.id || 'unknown') : 'unknown';
 
-            // Build invoice_map for hyperlinking invoice numbers in the email
+            // Build invoice_map for hyperlinking
             const invoiceMap = {};
             if (email.invoices && email.invoices.length > 0) {
                 email.invoices.forEach(inv => {
                     let invNumber = String(inv.invoice_number || '').trim();
-                    // Strip "INV-" prefix if present
                     if (invNumber.toUpperCase().startsWith('INV-')) {
                         invNumber = invNumber.substring(4).trim();
                     }
@@ -501,83 +681,82 @@
                 requestBody.cc = 'daniel@leveragelivelocal.com';
             }
 
-            console.log('Sending email:', requestBody);
-            
-            try {
-                const response = await fetch('/klaus/email/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
-                });
-                
-                if (response.ok) {
-                    alert('✅ Email sent successfully!');
-                    analyzeInvoices();
-                } else {
-                    const err = await response.json();
-                    let errorMsg = 'Unknown error';
-                    if (err.detail) {
-                        if (Array.isArray(err.detail)) {
-                            errorMsg = err.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
-                        } else if (typeof err.detail === 'string') {
-                            errorMsg = err.detail;
-                        } else {
-                            errorMsg = JSON.stringify(err.detail);
-                        }
+            const response = await fetch('/klaus/email/send', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (response.ok) {
+                return { success: true };
+            } else {
+                const err = await response.json();
+                let errorMsg = 'Unknown error';
+                if (err.detail) {
+                    if (Array.isArray(err.detail)) {
+                        errorMsg = err.detail.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+                    } else if (typeof err.detail === 'string') {
+                        errorMsg = err.detail;
+                    } else {
+                        errorMsg = JSON.stringify(err.detail);
                     }
-                    alert('❌ Failed to send: ' + errorMsg);
                 }
-            } catch (e) {
-                alert('❌ Error: ' + e.message);
+                return { success: false, error: errorMsg };
             }
         }
 
-        async function sendSingleEmail() {
+        async function sendFromModal() {
             if (!currentEmailData) return;
-            
-            bootstrap.Modal.getInstance(document.getElementById('emailModal')).hide();
-            await approveAndSend(currentEmailData.index);
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
+            modal.hide();
+
+            const index = currentEmailData.index;
+            const btn = document.querySelector(`#email-approval-${index} .btn-success`);
+            await approveAndSend(index, btn);
         }
 
         async function loadHistory() {
-            document.getElementById('history-section').style.display = 'block';
-            
+            const section = document.getElementById('history-section');
+            const container = document.getElementById('history-list');
+
+            section.style.display = 'block';
+            container.innerHTML = '<div class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading history...</div>';
+
             try {
                 const response = await fetch('/klaus/history');
                 const data = await response.json();
-                
-                const container = document.getElementById('history-list');
-                
+
                 if (!data.history || data.history.length === 0) {
-                    container.innerHTML = '<p class="text-muted">No communication history yet</p>';
+                    container.innerHTML = '<p class="text-muted text-center py-4">No communication history yet</p>';
                     return;
                 }
-                
+
                 let html = '<table class="table table-sm"><thead><tr><th>Date</th><th>Company</th><th>Method</th><th>Type</th></tr></thead><tbody>';
-                
+
                 data.history.slice(-50).reverse().forEach(h => {
                     const date = new Date(h.sent_at).toLocaleString();
                     html += `<tr>
                         <td><small>${date}</small></td>
                         <td>${h.company_name || '-'}</td>
-                        <td><span class="badge bg-secondary">${h.method || '-'}</span></td>
+                        <td><span class="badge badge-level">${h.method || '-'}</span></td>
                         <td>${h.message_type || '-'}</td>
                     </tr>`;
                 });
-                
+
                 html += '</tbody></table>';
                 container.innerHTML = html;
-                
+
+                // Scroll to history section
+                section.scrollIntoView({ behavior: 'smooth' });
+
             } catch (e) {
-                document.getElementById('history-list').innerHTML = '<p class="text-danger">Error loading history</p>';
+                container.innerHTML = '<p class="text-danger text-center py-4">Error loading history</p>';
             }
         }
 
-        // Load stats on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-analyze on load
-            analyzeInvoices();
-        });
+        // Auto-analyze on load
+        document.addEventListener('DOMContentLoaded', analyzeInvoices);
     </script>
 </body>
 </html>
