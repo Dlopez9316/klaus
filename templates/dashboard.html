@@ -14,40 +14,43 @@
 
   <style>
     :root{
-      --bg: #0b1020;
-      --card: #121a3a;
-      --card-2: #0f1733;
-      --text: #e9eefc;              /* main text */
-      --text-strong: #f7f9ff;       /* extra bright for contrast */
-      --muted: #bfc6e4;
-      --primary: #7aa2ff;
-      --primary-strong:#5a86ff;
-      --warning:#ffd166;
-      --success:#66e0a3;
-      --danger:#ff6b6b;
-      --shadow: 0 10px 30px rgba(10,14,40,.35);
-      --radius: 18px;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --card-2: #f1f5f9;
+      --text: #334155;
+      --text-strong: #1e293b;
+      --muted: #64748b;
+      --primary: #6366f1;
+      --primary-strong: #4f46e5;
+      --primary-light: #eef2ff;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
+      --radius: 16px;
+      --border: #e2e8f0;
     }
     *{font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;}
     body{
-      background: radial-gradient(90rem 60rem at -20% -20%, #18255a 0%, rgba(11,16,32,0) 40%),
-                  radial-gradient(80rem 60rem at 120% -10%, #1d2b70 0%, rgba(11,16,32,0) 50%),
-                  var(--bg);
+      background: var(--bg);
       color: var(--text);
       min-height: 100vh;
       padding: 18px 18px 48px;
     }
     .app-nav{
-      backdrop-filter: blur(10px);
-      background: linear-gradient(180deg, rgba(15,21,48,.65), rgba(15,21,48,.35));
-      border: 1px solid rgba(255,255,255,.08);
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
-    .brand{font-weight: 700; letter-spacing:.3px;}
+    .brand{font-weight: 700; letter-spacing:.3px; color: var(--text-strong);}
     .kpi-card{
-      background: linear-gradient(180deg, rgba(122,162,255,.10), rgba(18,26,58,.85));
-      border: 1px solid rgba(122,162,255,.25);
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       height: 100%;
@@ -55,17 +58,16 @@
     .kpi-card .icon{
       width: 44px;height: 44px;border-radius: 12px;
       display:flex;align-items:center;justify-content:center;
-      background: rgba(122,162,255,.15);color: var(--primary);
-      box-shadow: inset 0 0 0 1px rgba(122,162,255,.35);
+      background: var(--primary-light);color: var(--primary);
     }
-    .kpi-value{font-size: 2.4rem; font-weight: 700; color: #ffffff;}
+    .kpi-value{font-size: 2.4rem; font-weight: 700; color: var(--text-strong);}
     .card{
       background: var(--card);
-      border: 1px solid rgba(255,255,255,.06);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
     }
-    .card-plain{background: var(--card-2);}
+    .card-plain{background: var(--card-2); border: 1px solid var(--border);}
 
     /* Tabs */
     .nav-tabs{
@@ -73,116 +75,135 @@
     }
     .nav-tabs .nav-link{
       color: var(--muted);
-      border: 1px solid rgba(255,255,255,.08) !important;
+      border: 1px solid var(--border) !important;
       border-radius: 999px !important;
-      background: rgba(255,255,255,.02);
+      background: var(--card);
       padding: .6rem 1.1rem;
       display: inline-flex; align-items: center; gap: .5rem;
+      transition: all 0.2s ease;
+    }
+    .nav-tabs .nav-link:hover{
+      background: var(--card-2);
+      color: var(--text-strong);
     }
     .nav-tabs .nav-link.active{
-      color: var(--text-strong);
-      background: linear-gradient(180deg, rgba(122,162,255,.25), rgba(122,162,255,.08));
-      border-color: rgba(122,162,255,.35) !important;
-      box-shadow: 0 6px 20px rgba(122,162,255,.25);
+      color: var(--primary);
+      background: var(--primary-light);
+      border-color: var(--primary) !important;
+      font-weight: 500;
     }
 
     /* Buttons */
     .btn-primary{
-      background: linear-gradient(180deg, var(--primary), var(--primary-strong));
-      border: 1px solid rgba(122,162,255,.65);
-      box-shadow: 0 10px 20px rgba(90,134,255,.35);
-      border-radius: 14px;
+      background: var(--primary);
+      border: none;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+      border-radius: 12px;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover{
+      background: var(--primary-strong);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      transform: translateY(-1px);
+    }
+    .btn-success{
+      background: var(--success);
+      border: none;
+      border-radius: 10px;
+    }
+    .btn-danger{
+      background: var(--danger);
+      border: none;
+      border-radius: 10px;
     }
     .btn-reconcile{font-size: 1.05rem; padding:.9rem 1.4rem;}
     .confidence-badge{
-      font-size: .95rem;
-      padding: .45rem .8rem;
+      font-size: .85rem;
+      padding: .4rem .75rem;
       border-radius: 999px;
+      font-weight: 600;
     }
 
     /* List cards */
     .match-card,.suggestion-card{
       border-left: 4px solid var(--primary);
-      background: linear-gradient(180deg, rgba(122,162,255,.10), rgba(18,26,58,.85));
+      background: var(--card);
       border-radius: 14px;
-      border: 1px solid rgba(122,162,255,.25);
+      border: 1px solid var(--border);
       margin-bottom: 14px;
-      color: var(--text-strong); /* ensure bright text inside */
+      transition: all 0.2s ease;
+    }
+    .match-card:hover{
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
     }
     .suggestion-card{border-left-color: var(--warning);}
 
     .divider{
       height:1px;
-      background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.08), rgba(255,255,255,0));
+      background: var(--border);
       margin: .75rem 0 1rem;
     }
     .list-row{
       display:flex;justify-content:space-between;align-items:center;
-      padding:.5rem .25rem; border-bottom:1px dashed rgba(255,255,255,.08);
+      padding:.5rem .25rem; border-bottom:1px dashed var(--border);
       color: var(--text-strong);
     }
     .list-row:last-child{border-bottom:none;}
 
-    /* >>> UNIVERSAL HIGH-CONTRAST TEXT FIXES <<< */
-    /* Make anything “muted/secondary/small/label” bright and legible */
+    /* Text colors for light theme */
     .text-muted,
     .text-secondary,
     .text-body-secondary,
     small,
-    .form-text,
-    .form-label,
-    label,
-    .card-plain p,
-    .card-plain small,
-    .match-card small,
-    .suggestion-card small {
-      color: var(--text-strong) !important;
+    .form-text {
+      color: var(--muted) !important;
     }
 
-    /* All text inside cards should be high contrast white */
+    .form-label,
+    label {
+      color: var(--text-strong) !important;
+      font-weight: 500;
+    }
+
     .card strong,
     .card-body strong,
-    .card-body,
-    .card-body div,
     .card h6,
     strong {
       color: var(--text-strong) !important;
     }
 
-    /* Ensure Bootstrap utility text classes have high contrast */
-    .text-success,
-    .text-warning,
-    .text-info,
-    .text-danger,
-    h6.text-success,
-    h6.text-warning,
-    h6.text-info {
-      filter: brightness(1.5) !important;
+    .card-body,
+    .card-body div {
+      color: var(--text);
     }
 
     /* Muted containers */
     .muted-box{
-      background: rgba(255,255,255,.03);
-      border: 1px dashed rgba(255,255,255,.1);
+      background: var(--card-2);
+      border: 1px dashed var(--border);
       border-radius: 12px;
       padding: .75rem 1rem;
-      color: var(--text-strong) !important;
     }
 
-    /* Inputs: text + placeholder + labels all bright */
+    /* Inputs */
     .form-control,
     .form-select{
       color: var(--text-strong);
-      background-color: rgba(255,255,255,0.03);
-      border-color: rgba(255,255,255,0.18);
+      background-color: var(--card);
+      border-color: var(--border);
+      border-radius: 10px;
+    }
+    .form-control:focus,
+    .form-select:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
     }
     .form-control::placeholder{
-      color: rgba(247,249,255,0.85);
-      opacity: 1;
+      color: var(--muted);
     }
-    .form-label{ font-weight: 600; color: var(--text-strong) !important; }
 
-    /* Card headings brighter */
+    /* Card headings */
     .card-plain h5, .card-plain h6 { color: var(--text-strong); }
 
     .footer{
@@ -200,13 +221,13 @@
       display: inline-block;
       max-width: 100%;
     }
-    
+
     .description-text .tooltip-content {
       visibility: hidden;
       width: 400px;
       max-width: 90vw;
-      background-color: rgba(18, 26, 58, 0.98);
-      color: var(--text-strong);
+      background-color: var(--text-strong);
+      color: #fff;
       text-align: left;
       border-radius: 12px;
       padding: 12px 16px;
@@ -217,13 +238,12 @@
       margin-left: 0;
       opacity: 0;
       transition: opacity 0.3s;
-      border: 1px solid rgba(122, 162, 255, 0.35);
-      box-shadow: 0 10px 30px rgba(10, 14, 40, 0.5);
+      box-shadow: var(--shadow-lg);
       font-size: 0.9rem;
       word-wrap: break-word;
       white-space: pre-wrap;
     }
-    
+
     .description-text .tooltip-content::after {
       content: "";
       position: absolute;
@@ -232,23 +252,24 @@
       margin-left: -5px;
       border-width: 5px;
       border-style: solid;
-      border-color: rgba(18, 26, 58, 0.98) transparent transparent transparent;
+      border-color: var(--text-strong) transparent transparent transparent;
     }
-    
+
     .description-text:hover .tooltip-content {
       visibility: visible;
       opacity: 1;
     }
-    
+
     .date-badge {
       display: inline-block;
       padding: 4px 10px;
-      background: rgba(122, 162, 255, 0.15);
-      border: 1px solid rgba(122, 162, 255, 0.25);
+      background: var(--primary-light);
+      border: 1px solid rgba(99, 102, 241, 0.2);
       border-radius: 8px;
       font-size: 0.85rem;
+      color: var(--primary);
       margin-right: 8px;
-      color: var(--text-strong);
+      font-weight: 500;
     }
   </style>
 </head>
