@@ -204,17 +204,28 @@ class KlausGmailClient:
             if cc:
                 message['Cc'] = cc
 
-            # Attach plain text version
-            message.attach(MIMEText(body, 'plain'))
+            # Check if body is already HTML
+            is_html = body.strip().startswith('<html') or body.strip().startswith('<!DOCTYPE') or '<html>' in body
 
-            # If invoice_map provided, create HTML version with hyperlinks
-            if invoice_map:
+            if is_html:
+                # Body is already HTML - send as HTML
+                print("[GMAIL] Body is HTML - sending as HTML email")
+                # Add a plain text fallback (strip tags for plain version)
+                import re
+                plain_text = re.sub('<[^<]+?>', '', body)
+                message.attach(MIMEText(plain_text, 'plain'))
+                message.attach(MIMEText(body, 'html'))
+            elif invoice_map:
+                # Plain text with invoice_map - create HTML with hyperlinks
                 print(f"[GMAIL] Creating HTML with hyperlinked invoices: {list(invoice_map.keys())}")
+                message.attach(MIMEText(body, 'plain'))
                 html_body = InvoiceHyperlinker.create_html_email(body, invoice_map)
                 message.attach(MIMEText(html_body, 'html'))
                 print(f"[GMAIL] HTML body preview: {html_body[:500]}...")
             else:
+                # Plain text only
                 print("[GMAIL] No invoice_map - sending plain text only")
+                message.attach(MIMEText(body, 'plain'))
             
             # Add attachments if provided
             if attachments:
