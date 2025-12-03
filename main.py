@@ -833,6 +833,193 @@ async def validate_company_payments(days: int = 365):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/validation-report", response_model=dict)
+async def validation_report(days: int = 730):
+    """
+    Validation report endpoint - alias for validate-companies with correct response format
+    """
+    try:
+        # Get transactions
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        transactions = await plaid_client.get_transactions(
+            start_date=start_date.strftime("%Y-%m-%d"),
+            end_date=end_date.strftime("%Y-%m-%d")
+        )
+
+        # Get all invoices with payment history
+        all_invoices = []
+        after = None
+        pages_fetched = 0
+        max_pages = 20
+
+        while pages_fetched < max_pages:
+            all_invoices_response = hubspot_client.client.crm.objects.basic_api.get_page(
+                object_type="invoices",
+                limit=100,
+                after=after,
+                properties=["hs_invoice_number", "hs_title", "hs_amount_billed", "hs_payment_status",
+                           "hs_balance_due", "hs_due_date", "hs_createdate", "hs_number", "hs_payment_date"],
+                associations=["companies"]
+            )
+            for invoice in all_invoices_response.results:
+                all_invoices.append(invoice)
+            pages_fetched += 1
+            if hasattr(all_invoices_response, 'paging') and all_invoices_response.paging and hasattr(all_invoices_response.paging, 'next'):
+                after = all_invoices_response.paging.next.after
+            else:
+                break
+
+        # Extract paid invoices with company names
+        paid_invoices = []
+        all_companies = set()
+
+        for invoice in all_invoices:
+            props = invoice.properties
+            company_name = None
+
+            if hasattr(invoice, 'associations') and invoice.associations:
+                company_associations = invoice.associations.get('companies', {})
+                if company_associations and hasattr(company_associations, 'results') and company_associations.results:
+                    company_id = company_associations.results[0].id
+                    try:
+                        company = hubspot_client.client.crm.companies.basic_api.get_by_id(company_id=company_id, properties=["name"])
+                        company_name = company.properties.get("name")
+                        all_companies.add(company_name)
+                    except:
+                        pass
+
+            payment_date = props.get("hs_payment_date")
+            if payment_date and company_name:
+                paid_invoices.append({
+                    'id': invoice.id,
+                    'number': props.get("hs_invoice_number") or props.get("hs_number") or "",
+                    'company_name': company_name,
+                    'amount': float(props.get("hs_amount_billed", 0)) if props.get("hs_amount_billed") else 0,
+                    'payment_date': payment_date,
+                    'created_date': props.get("hs_createdate")
+                })
+
+        # Validate each company
+        validation_results = []
+        for company in all_companies:
+            if company:
+                validation = matching_engine.validate_company_payments(
+                    company_name=company,
+                    paid_invoices=paid_invoices,
+                    all_transactions=transactions
+                )
+                validation_results.append(validation)
+
+        # Separate by status
+        balanced = [v for v in validation_results if v['status'] == 'balanced']
+        short = [v for v in validation_results if v['status'] == 'short']
+        over = [v for v in validation_results if v['status'] == 'over']
+
+        return {
+            "status": "success",
+            "summary": {
+                "total_companies": len(validation_results),
+                "balanced": len(balanced),
+                "short": len(short),
+                "over": len(over),
+                "lookback_days": days
+            },
+            "balanced_companies": balanced,
+            "short_companies": short,
+            "over_companies": over
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/suggest-associations", response_model=dict)
+async def suggest_associations(days: int = 730):
+    """
+    Analyze historical paid invoices and bank transactions to suggest associations
+    """
+    try:
+        # Get transactions
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=days)
+
+        transactions = await plaid_client.get_transactions(
+            start_date=start_date.strftime("%Y-%m-%d"),
+            end_date=end_date.strftime("%Y-%m-%d")
+        )
+
+        # Get all paid invoices
+        all_invoices = []
+        after = None
+        pages_fetched = 0
+        max_pages = 20
+
+        while pages_fetched < max_pages:
+            all_invoices_response = hubspot_client.client.crm.objects.basic_api.get_page(
+                object_type="invoices",
+                limit=100,
+                after=after,
+                properties=["hs_invoice_number", "hs_title", "hs_amount_billed", "hs_payment_status",
+                           "hs_balance_due", "hs_due_date", "hs_createdate", "hs_number", "hs_payment_date"],
+                associations=["companies"]
+            )
+            for invoice in all_invoices_response.results:
+                all_invoices.append(invoice)
+            pages_fetched += 1
+            if hasattr(all_invoices_response, 'paging') and all_invoices_response.paging and hasattr(all_invoices_response.paging, 'next'):
+                after = all_invoices_response.paging.next.after
+            else:
+                break
+
+        # Extract paid invoices with company names
+        paid_invoices = []
+
+        for invoice in all_invoices:
+            props = invoice.properties
+            company_name = None
+
+            if hasattr(invoice, 'associations') and invoice.associations:
+                company_associations = invoice.associations.get('companies', {})
+                if company_associations and hasattr(company_associations, 'results') and company_associations.results:
+                    company_id = company_associations.results[0].id
+                    try:
+                        company = hubspot_client.client.crm.companies.basic_api.get_by_id(company_id=company_id, properties=["name"])
+                        company_name = company.properties.get("name")
+                    except:
+                        pass
+
+            payment_date = props.get("hs_payment_date")
+            if payment_date and company_name:
+                paid_invoices.append({
+                    'id': invoice.id,
+                    'number': props.get("hs_invoice_number") or props.get("hs_number") or "",
+                    'company_name': company_name,
+                    'amount': float(props.get("hs_amount_billed", 0)) if props.get("hs_amount_billed") else 0,
+                    'payment_date': payment_date,
+                    'created_date': props.get("hs_createdate")
+                })
+
+        # Generate suggestions
+        suggestions = matching_engine.suggest_associations_from_history(paid_invoices, transactions)
+
+        return {
+            "status": "success",
+            "suggestions_count": len(suggestions),
+            "suggestions": suggestions,
+            "analyzed_paid_invoices": len(paid_invoices),
+            "analyzed_transactions": len(transactions)
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/teach", response_model=dict)
 async def teach_association(request: TeachRequest):
     """Teach the engine a transaction-to-company association"""
@@ -841,7 +1028,7 @@ async def teach_association(request: TeachRequest):
             transaction_name=request.transaction_name,
             company_name=request.company_name
         )
-        
+
         return {
             "status": "success",
             "message": f"✓ Learned: '{request.transaction_name}' → '{request.company_name}'",
