@@ -194,20 +194,27 @@ class KlausGmailClient:
         """
         
         try:
+            print(f"[GMAIL] Preparing email to {to_email}")
+            print(f"[GMAIL] invoice_map received: {invoice_map}")
+
             message = MIMEMultipart('alternative')
             message['To'] = f"{to_name} <{to_email}>"
             message['Subject'] = subject
-            
+
             if cc:
                 message['Cc'] = cc
-            
+
             # Attach plain text version
             message.attach(MIMEText(body, 'plain'))
-            
+
             # If invoice_map provided, create HTML version with hyperlinks
             if invoice_map:
+                print(f"[GMAIL] Creating HTML with hyperlinked invoices: {list(invoice_map.keys())}")
                 html_body = InvoiceHyperlinker.create_html_email(body, invoice_map)
                 message.attach(MIMEText(html_body, 'html'))
+                print(f"[GMAIL] HTML body preview: {html_body[:500]}...")
+            else:
+                print("[GMAIL] No invoice_map - sending plain text only")
             
             # Add attachments if provided
             if attachments:
