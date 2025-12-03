@@ -66,7 +66,8 @@ class HubSpotClient:
                         "hs_due_date",
                         "hs_createdate",
                         "hs_number",
-                        "hs_payment_date"
+                        "hs_payment_date",
+                        "hs_invoice_link"
                     ],
                     associations=["companies", "contacts"]
                 )
@@ -123,9 +124,9 @@ class HubSpotClient:
                         contact_email = "unknown@email.com"
                     
                     invoice_number = props.get("hs_invoice_number") or props.get("hs_number") or props.get("hs_title") or ""
-                    
-                    # Generate HubSpot URL for this invoice
-                    hubspot_url = self.get_invoice_url(invoice.id)
+
+                    # Use the public invoice link from HubSpot (preferred) or fall back to internal URL
+                    hubspot_url = props.get("hs_invoice_link") or self.get_invoice_url(invoice.id)
                     
                     all_invoices.append({
                         'id': invoice.id,
