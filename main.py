@@ -601,7 +601,18 @@ async def approve_match(request: ApprovalRequest):
             status='Reconciled',
             transaction_details=request.transaction_description
         )
-        
+
+        # Mark the transaction as accounted so it won't be suggested again
+        if request.transaction_description:
+            matching_engine.mark_transaction_accounted(
+                transaction_description=request.transaction_description,
+                transaction_id=None,
+                amount=0,  # Amount not passed in request, but description is key
+                date=request.transaction_date,
+                company_name=request.company_name or '',
+                invoice_id=request.invoice_id
+            )
+
         return {
             "status": "success",
             "message": f"Invoice {request.invoice_id} marked as reconciled"
@@ -616,7 +627,7 @@ async def approve_bulk_matches(request: BulkApprovalRequest):
     try:
         success_count = 0
         errors = []
-        
+
         for approval in request.approvals:
             try:
                 await hubspot_client.update_invoice_reconciliation_status(
@@ -624,13 +635,25 @@ async def approve_bulk_matches(request: BulkApprovalRequest):
                     status='Reconciled',
                     transaction_details=approval.transaction_description
                 )
+
+                # Mark the transaction as accounted so it won't be suggested again
+                if approval.transaction_description:
+                    matching_engine.mark_transaction_accounted(
+                        transaction_description=approval.transaction_description,
+                        transaction_id=None,
+                        amount=0,
+                        date=approval.transaction_date,
+                        company_name=approval.company_name or '',
+                        invoice_id=approval.invoice_id
+                    )
+
                 success_count += 1
             except Exception as e:
                 errors.append({
                     "invoice_id": approval.invoice_id,
                     "error": str(e)
                 })
-        
+
         return {
             "status": "success",
             "approved": success_count,
