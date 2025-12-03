@@ -521,20 +521,143 @@ class ReconciliationEngine:
         company_name = self._clean_company_name(invoice.get('company_name', ''))
         if not trans_desc or not company_name:
             return 0
+
+        # Remove processor names from transaction description
         for processor in self.PROCESSORS.keys():
             trans_desc = trans_desc.replace(processor, '')
         trans_desc = ' '.join(trans_desc.split())
+
+        # Extract core company name (remove common suffixes)
+        company_core = self._extract_company_core(company_name)
+
+        # === TIER 1: Exact substring match (highest confidence) ===
+        # If the core company name appears exactly in transaction
+        if len(company_core) >= 5 and company_core in trans_desc:
+            return 100
+
+        # === TIER 2: Fuzzy substring match (handles misspellings) ===
+        # Check if core company name is similar to any part of the transaction
+        fuzzy_substring_score = self._fuzzy_substring_match(company_core, trans_desc)
+        if fuzzy_substring_score >= 90:
+            return 98
+        if fuzzy_substring_score >= 80:
+            return 92
+
+        # === TIER 3: Word-by-word matching ===
         trans_words = set(trans_desc.split())
-        company_words = set(company_name.split())
-        common_words = trans_words & company_words
-        if common_words:
-            overlap_score = (len(common_words) / len(company_words)) * 100
-            if overlap_score > 50:
-                return min(90, overlap_score)
+        company_words_meaningful = self._get_meaningful_words(company_name)
+
+        if company_words_meaningful:
+            # Check for exact word matches
+            exact_matches = trans_words & company_words_meaningful
+
+            # Check for fuzzy word matches (handles misspellings like PNAMA vs PANAMA)
+            fuzzy_matches = self._count_fuzzy_word_matches(company_words_meaningful, trans_words)
+
+            total_matches = len(exact_matches) + fuzzy_matches
+            match_ratio = total_matches / len(company_words_meaningful)
+
+            if match_ratio >= 0.9:
+                return 95
+            if match_ratio >= 0.75:
+                return 90
+            if match_ratio >= 0.5:
+                return 75 + (match_ratio * 20)
+
+        # === TIER 4: Fuzzy ratio matching (fallback) ===
+        # Standard fuzzy matching for edge cases
         ratio = fuzz.partial_ratio(trans_desc, company_name)
+        token_ratio = fuzz.token_set_ratio(trans_desc, company_name)
+
+        # Use the better of the two fuzzy methods
+        best_ratio = max(ratio, token_ratio)
+
+        # Boost if there's a substring relationship
         if company_name in trans_desc or trans_desc in company_name:
-            ratio = min(100, ratio + 20)
-        return ratio
+            best_ratio = min(100, best_ratio + 20)
+
+        return best_ratio
+
+    def _extract_company_core(self, company_name: str) -> str:
+        """Extract the meaningful core of a company name, removing common suffixes"""
+        core = company_name
+        suffixes = [
+            'LLC', 'INC', 'CORP', 'CORPORATION', 'LTD', 'LIMITED', 'LP', 'LLP',
+            'OWNER', 'OWNERS', 'OWNERSHIP',
+            'PROPERTIES', 'PROPERTY', 'PROP',
+            'GROUP', 'HOLDINGS', 'HOLDING',
+            'INVESTMENTS', 'INVESTMENT', 'INVEST',
+            'MANAGEMENT', 'MGMT', 'MGT',
+            'PARTNERS', 'PARTNER',
+            'ASSOCIATES', 'ASSOC',
+            'ENTERPRISES', 'ENTERPRISE',
+            'COMPANY', 'CO',
+            'REAL ESTATE', 'REALTY',
+            'DEVELOPMENT', 'DEV',
+            'CAPITAL', 'CAP',
+            'VENTURES', 'VENTURE',
+            'TRUST', 'TR',
+            'FUND', 'FUNDS',
+            'MF',  # Multifamily
+        ]
+        for suffix in suffixes:
+            # Remove suffix with word boundary (space or end of string)
+            core = core.replace(' ' + suffix + ' ', ' ')
+            core = core.replace(' ' + suffix, '')
+            if core.endswith(suffix):
+                core = core[:-len(suffix)]
+        return ' '.join(core.split()).strip()
+
+    def _get_meaningful_words(self, company_name: str) -> set:
+        """Get meaningful words from company name, filtering out common business terms"""
+        ignore_words = {
+            'LLC', 'INC', 'CORP', 'LTD', 'LP', 'LLP',
+            'THE', 'OF', 'AND', 'AT', 'IN', 'ON', 'FOR', 'A', 'AN',
+            'OWNER', 'OWNERS', 'CO', 'COMPANY',
+            'PROPERTIES', 'PROPERTY', 'GROUP', 'HOLDINGS',
+            'MANAGEMENT', 'MGMT', 'PARTNERS', 'ASSOCIATES',
+            'INVESTMENTS', 'INVESTMENT', 'ENTERPRISES',
+            'REAL', 'ESTATE', 'REALTY', 'DEVELOPMENT',
+            'CAPITAL', 'VENTURES', 'TRUST', 'FUND',
+        }
+        words = set(company_name.split())
+        return words - ignore_words
+
+    def _fuzzy_substring_match(self, needle: str, haystack: str) -> float:
+        """Check if needle appears as a fuzzy substring anywhere in haystack"""
+        if len(needle) < 3:
+            return 0
+
+        needle_len = len(needle)
+        best_score = 0
+
+        # Slide a window across haystack and check similarity
+        words = haystack.split()
+        for i in range(len(words)):
+            for j in range(i + 1, min(i + 5, len(words) + 1)):  # Check up to 4-word combinations
+                window = ' '.join(words[i:j])
+                if len(window) >= len(needle) * 0.7:  # Window should be reasonably sized
+                    score = fuzz.ratio(needle, window)
+                    best_score = max(best_score, score)
+
+        return best_score
+
+    def _count_fuzzy_word_matches(self, company_words: set, trans_words: set, threshold: int = 80) -> int:
+        """Count company words that fuzzy-match transaction words (handles misspellings)"""
+        fuzzy_count = 0
+        for cw in company_words:
+            if cw in trans_words:
+                continue  # Already counted as exact match
+            if len(cw) < 3:
+                continue  # Skip very short words
+            for tw in trans_words:
+                if len(tw) < 3:
+                    continue
+                # Check fuzzy similarity
+                if fuzz.ratio(cw, tw) >= threshold:
+                    fuzzy_count += 1
+                    break
+        return fuzzy_count
     
     def _clean_company_name(self, name: str) -> str:
         if not name:
@@ -578,10 +701,16 @@ class ReconciliationEngine:
         return 0
     
     def _calculate_confidence_smart(self, memory_match: float, amount_match: float, name_match: float, date_match: float, invoice_num_match: float, processor: Optional[Dict]) -> float:
+        # If we have a strong name match (company name clearly in transaction), boost confidence significantly
+        if name_match >= 95 and amount_match >= 90:
+            # Strong name + exact amount = very high confidence
+            return min(100, 85 + (name_match * 0.1) + (amount_match * 0.05))
+
         if memory_match > 0:
             weights = {'memory': 0.5, 'amount': 0.3, 'name': 0.1, 'date': 0.05, 'invoice': 0.05}
         else:
-            weights = {'memory': 0.0, 'amount': 0.35, 'name': 0.35, 'date': 0.20, 'invoice': 0.10}
+            # Increased name weight from 0.35 to 0.40 for better company matching
+            weights = {'memory': 0.0, 'amount': 0.35, 'name': 0.40, 'date': 0.15, 'invoice': 0.10}
         score = (memory_match * weights['memory'] + amount_match * weights['amount'] + name_match * weights['name'] + date_match * weights['date'] + invoice_num_match * weights['invoice'])
         if processor:
             score = min(100, score + 5)

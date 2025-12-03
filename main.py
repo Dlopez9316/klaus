@@ -1462,6 +1462,20 @@ async def get_email_config():
     }
 
 
+@app.get("/admin/accounted-transactions", response_model=dict)
+async def get_accounted_transactions():
+    """Debug endpoint to see accounted transactions"""
+    memory = matching_engine.memory
+    accounted = memory.get('accounted_transactions', [])
+    denied = memory.get('denied_matches', [])
+    return {
+        "accounted_count": len(accounted),
+        "accounted_transactions": accounted[-20:],  # Last 20
+        "denied_count": len(denied),
+        "denied_matches": denied[-20:]  # Last 20
+    }
+
+
 # ============================================================================
 # STARTUP
 # ============================================================================
