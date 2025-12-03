@@ -1389,7 +1389,11 @@ async def get_email_config():
         "smtp_user": masked_user,
         "smtp_password_set": bool(os.getenv("SMTP_PASSWORD")),
         "klaus_from_email": os.getenv("KLAUS_FROM_EMAIL", "klaus@leveragelivelocal.com (default)"),
-        "klaus_smtp_active": klaus_smtp is not None
+        "klaus_smtp_active": klaus_smtp is not None,
+        "klaus_gmail_active": klaus_gmail is not None,
+        "gmail_refresh_token_set": bool(os.getenv("GMAIL_REFRESH_TOKEN")),
+        "gmail_client_id_set": bool(os.getenv("GMAIL_CLIENT_ID")),
+        "gmail_client_secret_set": bool(os.getenv("GMAIL_CLIENT_SECRET"))
     }
 
 
