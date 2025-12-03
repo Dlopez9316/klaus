@@ -1019,7 +1019,7 @@
       const resultDiv = document.getElementById('notification-result');
       resultDiv.innerHTML = '<div class="alert alert-info">Sending test notification...</div>';
       try {
-        const response = await fetch('/send-test-notification', {
+        const response = await fetch('/notification/test', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
@@ -1031,20 +1031,24 @@
 
         if (result.status === 'success') {
           let message = '<div class="alert alert-success"><strong>Test Results:</strong><br>';
-          if (result.results.email.sent) {
+          if (result.results?.email?.sent) {
             message += '✓ Email sent successfully!<br>';
-          } else if (result.results.email.error) {
+          } else if (result.results?.email?.error) {
             message += '✗ Email failed: ' + result.results.email.error + '<br>';
+          } else if (type === 'email' || type === 'both') {
+            message += '⚠ Email not configured<br>';
           }
-          if (result.results.whatsapp.sent) {
+          if (result.results?.whatsapp?.sent) {
             message += '✓ WhatsApp sent successfully!<br>';
-          } else if (result.results.whatsapp.error) {
+          } else if (result.results?.whatsapp?.error) {
             message += '✗ WhatsApp failed: ' + result.results.whatsapp.error + '<br>';
+          } else if (type === 'whatsapp' || type === 'both') {
+            message += '⚠ WhatsApp not configured<br>';
           }
           message += '</div>';
           resultDiv.innerHTML = message;
         } else {
-          resultDiv.innerHTML = '<div class="alert alert-danger">Test failed: ' + (result.message || 'Unknown error') + '</div>';
+          resultDiv.innerHTML = '<div class="alert alert-danger">Test failed: ' + (result.message || result.detail || 'Unknown error') + '</div>';
         }
       } catch(e) {
         resultDiv.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';

@@ -74,7 +74,7 @@ matching_engine = ReconciliationEngine(
     anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
 )
 
-notification_service = NotificationService()
+# notification_service initialized after klaus_gmail below
 
 # Klaus clients
 klaus_engine = KlausEngine(config_path="klaus_config.json")
@@ -101,6 +101,9 @@ except Exception as e:
     klaus_gmail = None
     klaus_email_responder = None
     print(f"⚠ Klaus Gmail not available: {e}")
+
+# Initialize notification service with Gmail client (if available)
+notification_service = NotificationService(gmail_client=klaus_gmail)
 
 # Initialize Klaus SMTP (fallback for when Gmail API isn't available)
 klaus_smtp = None
@@ -446,6 +449,16 @@ async def klaus_dashboard(request: Request):
 @app.get("/health", response_model=dict)
 async def health_check():
     """Health check endpoint"""
+    # Check email configuration (Gmail API or SMTP)
+    email_configured = klaus_gmail is not None or (os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"))
+
+    # Check WhatsApp configuration (Twilio)
+    whatsapp_configured = bool(
+        os.getenv("TWILIO_ACCOUNT_SID") and
+        os.getenv("TWILIO_AUTH_TOKEN") and
+        os.getenv("TWILIO_WHATSAPP_TO")
+    )
+
     return {
         "status": "healthy",
         "version": "3.0.0",
@@ -455,7 +468,9 @@ async def health_check():
             "klaus_gmail": klaus_gmail is not None,
             "klaus_smtp": klaus_smtp is not None,
             "klaus_drive": klaus_drive is not None,
-            "klaus_voice": klaus_voice is not None
+            "klaus_voice": klaus_voice is not None,
+            "email": "configured" if email_configured else "not_configured",
+            "whatsapp": "configured" if whatsapp_configured else "not_configured"
         }
     }
 
