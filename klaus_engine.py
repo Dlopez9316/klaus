@@ -247,7 +247,8 @@ class KlausEngine:
             'escalation_level': escalation_level,
             'contact_count': contact_count,
             'last_contact_date': last_contact['sent_at'] if last_contact else None,
-            'previous_contacts': [c['sent_at'] for c in previous_contacts]
+            'previous_contacts': [c['sent_at'] for c in previous_contacts],
+            'hubspot_url': invoice.get('hubspot_url', '')
         }
     
     def _get_contact_history(self, invoice_id: str) -> List[Dict]:

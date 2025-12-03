@@ -228,6 +228,7 @@ class KlausEmailRequest(BaseModel):
     subject: str
     body: str
     cc: Optional[str] = None
+    invoice_map: Optional[Dict[str, str]] = None  # Maps invoice numbers to HubSpot URLs for hyperlinking
 
 class KlausEmailApprovalRequest(BaseModel):
     invoice_id: str
@@ -1024,7 +1025,8 @@ async def klaus_send_email(request: KlausEmailRequest):
             to_name=request.to_name,
             subject=request.subject,
             body=request.body,
-            cc=request.cc
+            cc=request.cc,
+            invoice_map=request.invoice_map
         )
 
         print(f"[EMAIL] Result: {result}")

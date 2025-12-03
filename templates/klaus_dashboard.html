@@ -373,14 +373,31 @@
                         continue;
                     }
                     
+                    // Build invoice_map for hyperlinking invoice numbers in the email
+                    const invoiceMap = {};
+                    if (email.invoices && email.invoices.length > 0) {
+                        email.invoices.forEach(inv => {
+                            let invNumber = String(inv.invoice_number || '').trim();
+                            // Strip "INV-" prefix if present
+                            if (invNumber.toUpperCase().startsWith('INV-')) {
+                                invNumber = invNumber.substring(4).trim();
+                            }
+                            const hubspotUrl = inv.hubspot_url || '';
+                            if (invNumber && hubspotUrl) {
+                                invoiceMap[invNumber] = hubspotUrl;
+                            }
+                        });
+                    }
+
                     const requestBody = {
                         invoice_id: invoiceId,
                         to_email: email.contact_email,
                         to_name: email.contact_name,
                         subject: subject,
-                        body: body
+                        body: body,
+                        invoice_map: Object.keys(invoiceMap).length > 0 ? invoiceMap : null
                     };
-                    
+
                     // Only add cc if it's a VIP
                     if (email.is_vip) {
                         requestBody.cc = 'daniel@leveragelivelocal.com';
