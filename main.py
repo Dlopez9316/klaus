@@ -1192,17 +1192,21 @@ async def exchange_public_token(request: PublicTokenExchange):
 async def test_notification(request: NotificationTestRequest):
     """Test notification system"""
     try:
-        success = notification_service.send_reconciliation_report(
+        results = notification_service.send_reconciliation_report(
             matches=[],
             suggestions=[],
             stats={'test': True},
             via_email=request.via_email,
             via_whatsapp=request.via_whatsapp
         )
-        
+
+        # Check if any notifications were sent successfully
+        any_sent = results.get('email', {}).get('sent') or results.get('whatsapp', {}).get('sent')
+
         return {
-            "status": "success" if success else "partial",
-            "message": "Test notification sent"
+            "status": "success" if any_sent else "partial",
+            "message": "Test notification sent",
+            "results": results
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
