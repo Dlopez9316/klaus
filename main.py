@@ -453,11 +453,11 @@ async def health_check():
     email_configured = klaus_gmail is not None or (os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"))
 
     # Check WhatsApp configuration (Twilio)
-    whatsapp_configured = bool(
-        os.getenv("TWILIO_ACCOUNT_SID") and
-        os.getenv("TWILIO_AUTH_TOKEN") and
-        os.getenv("TWILIO_WHATSAPP_TO")
-    )
+    twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    twilio_token = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_to = os.getenv("TWILIO_WHATSAPP_TO")
+
+    whatsapp_configured = bool(twilio_sid and twilio_token and twilio_to)
 
     return {
         "status": "healthy",
@@ -471,6 +471,11 @@ async def health_check():
             "klaus_voice": klaus_voice is not None,
             "email": "configured" if email_configured else "not_configured",
             "whatsapp": "configured" if whatsapp_configured else "not_configured"
+        },
+        "debug_twilio": {
+            "sid_set": bool(twilio_sid),
+            "token_set": bool(twilio_token),
+            "to_set": bool(twilio_to)
         }
     }
 
