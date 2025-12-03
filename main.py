@@ -1377,20 +1377,25 @@ async def get_storage_info():
 async def get_invoice_properties():
     """Debug endpoint - get all properties from a sample invoice"""
     try:
-        from hubspot import HubSpot
-        client = HubSpot(access_token=os.getenv("HUBSPOT_API_KEY"))
+        import requests
+        api_key = os.getenv("HUBSPOT_API_KEY")
 
-        # Get one invoice with ALL properties
-        invoices = client.crm.invoices.basic_api.get_page(limit=1)
+        # Get one invoice using REST API
+        url = "https://api.hubapi.com/crm/v3/objects/invoices"
+        headers = {"Authorization": f"Bearer {api_key}"}
+        params = {"limit": 1, "properties": "*"}
 
-        if invoices.results:
-            invoice = invoices.results[0]
+        response = requests.get(url, headers=headers, params=params)
+        data = response.json()
+
+        if data.get("results"):
+            invoice = data["results"][0]
             return {
                 "status": "success",
-                "invoice_id": invoice.id,
-                "properties": dict(invoice.properties) if invoice.properties else {}
+                "invoice_id": invoice.get("id"),
+                "properties": invoice.get("properties", {})
             }
-        return {"status": "no_invoices"}
+        return {"status": "no_invoices", "data": data}
     except Exception as e:
         return {"status": "error", "error": str(e)}
 
