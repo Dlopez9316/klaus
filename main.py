@@ -1380,24 +1380,37 @@ async def get_invoice_properties():
         import requests
         api_key = os.getenv("HUBSPOT_API_KEY")
 
-        # Get one invoice using REST API
-        url = "https://api.hubapi.com/crm/v3/objects/invoices"
+        # First, get all available invoice properties
+        props_url = "https://api.hubapi.com/crm/v3/properties/invoices"
         headers = {"Authorization": f"Bearer {api_key}"}
-        params = {"limit": 1, "properties": "*"}
+
+        props_response = requests.get(props_url, headers=headers)
+        props_data = props_response.json()
+
+        # Get all property names
+        all_prop_names = [p["name"] for p in props_data.get("results", [])]
+
+        # Now get an invoice with ALL properties
+        url = "https://api.hubapi.com/crm/v3/objects/invoices"
+        params = {"limit": 1, "properties": ",".join(all_prop_names)}
 
         response = requests.get(url, headers=headers, params=params)
         data = response.json()
 
         if data.get("results"):
             invoice = data["results"][0]
+            # Filter out None values for readability
+            props = {k: v for k, v in invoice.get("properties", {}).items() if v is not None}
             return {
                 "status": "success",
                 "invoice_id": invoice.get("id"),
-                "properties": invoice.get("properties", {})
+                "properties": props,
+                "all_available_properties": all_prop_names
             }
         return {"status": "no_invoices", "data": data}
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        import traceback
+        return {"status": "error", "error": str(e), "traceback": traceback.format_exc()}
 
 
 @app.get("/admin/email-config", response_model=dict)
