@@ -448,18 +448,18 @@
 
         async function approveAndSend(index) {
             const email = analysisResults.pending_approvals[index];
-            
+
             if (!confirm(`Send email to ${email.contact_name} (${email.contact_email})?`)) {
                 return;
             }
-            
+
             // Parse subject from message
             const message = email.recommended_message || '';
             const normalizedMessage = message.replace(/\r\n/g, '\n');
-            
+
             let subject = 'Payment Reminder';
             let body = normalizedMessage;
-            
+
             if (normalizedMessage.startsWith('Subject:')) {
                 const firstBlankLine = normalizedMessage.indexOf('\n\n');
                 if (firstBlankLine > -1) {
@@ -467,23 +467,40 @@
                     body = normalizedMessage.substring(firstBlankLine + 2);
                 }
             }
-            
+
             // Get first invoice ID from the invoices array
             const firstInvoice = email.invoices && email.invoices[0];
             const invoiceId = firstInvoice ? String(firstInvoice.invoice_id || firstInvoice.id || 'unknown') : 'unknown';
-            
+
+            // Build invoice_map for hyperlinking invoice numbers in the email
+            const invoiceMap = {};
+            if (email.invoices && email.invoices.length > 0) {
+                email.invoices.forEach(inv => {
+                    let invNumber = String(inv.invoice_number || '').trim();
+                    // Strip "INV-" prefix if present
+                    if (invNumber.toUpperCase().startsWith('INV-')) {
+                        invNumber = invNumber.substring(4).trim();
+                    }
+                    const hubspotUrl = inv.hubspot_url || '';
+                    if (invNumber && hubspotUrl) {
+                        invoiceMap[invNumber] = hubspotUrl;
+                    }
+                });
+            }
+
             const requestBody = {
                 invoice_id: invoiceId,
                 to_email: email.contact_email,
                 to_name: email.contact_name,
                 subject: subject,
-                body: body
+                body: body,
+                invoice_map: Object.keys(invoiceMap).length > 0 ? invoiceMap : null
             };
-            
+
             if (email.is_vip) {
                 requestBody.cc = 'daniel@leveragelivelocal.com';
             }
-            
+
             console.log('Sending email:', requestBody);
             
             try {
