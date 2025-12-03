@@ -1554,17 +1554,19 @@ async def klaus_get_stats():
 
 @app.post("/webhooks/vapi")
 async def vapi_webhook(request: Request):
-    """Handle Vapi.ai call completion webhooks"""
+    """Handle Vapi.ai call webhooks"""
     try:
         data = await request.json()
-        
+        print(f"[VAPI WEBHOOK] Received: {data.get('message', {}).get('type', 'unknown')}")
+
         if klaus_voice:
-            result = klaus_voice.handle_call_ended(data)
+            result = klaus_voice.handle_webhook(data)
             return JSONResponse(content=result)
         else:
             return JSONResponse(content={"status": "service_unavailable"})
-    
+
     except Exception as e:
+        print(f"[VAPI WEBHOOK] Error: {str(e)}")
         return JSONResponse(content={"status": "error", "error": str(e)}, status_code=500)
 
 # ============================================================================
