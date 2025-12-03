@@ -229,7 +229,10 @@ class KlausEngine:
             requires_approval = True
         
         if company_name in self.config.get('vip_contacts', []):
-            requires_approval = True
+            # Check config for whether VIP always requires approval
+            approval_thresholds = self.config.get('approval_thresholds', {})
+            if approval_thresholds.get('vip_always_requires_approval', True):
+                requires_approval = True
         
         return {
             'invoice_id': invoice_id,
