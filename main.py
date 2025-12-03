@@ -1001,10 +1001,13 @@ async def klaus_send_email(request: KlausEmailRequest):
     try:
         # Try Gmail first, fall back to SMTP
         email_client = klaus_gmail or klaus_smtp
-        
+
+        print(f"[EMAIL] Using client: {type(email_client).__name__ if email_client else 'None'}")
+        print(f"[EMAIL] Sending to: {request.to_email}, Subject: {request.subject[:50]}...")
+
         if not email_client:
             raise HTTPException(status_code=503, detail="No email service configured (neither Gmail nor SMTP)")
-        
+
         result = email_client.send_email(
             to_email=request.to_email,
             to_name=request.to_name,
@@ -1012,7 +1015,9 @@ async def klaus_send_email(request: KlausEmailRequest):
             body=request.body,
             cc=request.cc
         )
-        
+
+        print(f"[EMAIL] Result: {result}")
+
         if result['status'] == 'success':
             # Log communication
             klaus_engine.log_communication(
@@ -1022,10 +1027,11 @@ async def klaus_send_email(request: KlausEmailRequest):
                 message_type='collection',
                 approved_by='manual'
             )
-        
+
         return result
-    
+
     except Exception as e:
+        print(f"[EMAIL] Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/klaus/emails/pending", response_model=dict)
