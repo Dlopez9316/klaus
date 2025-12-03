@@ -96,11 +96,19 @@ class KlausSMTPClient:
             recipients = [to_email]
             if cc:
                 recipients.append(cc)
-            
-            with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
-                server.starttls()
-                server.login(self.smtp_user, self.smtp_password)
-                server.send_message(msg)
+
+            # Use SSL on port 465 (required for Railway) or STARTTLS on port 587
+            if self.smtp_port == 465:
+                print(f"[SMTP] Connecting via SSL to {self.smtp_host}:{self.smtp_port}...")
+                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port) as server:
+                    server.login(self.smtp_user, self.smtp_password)
+                    server.send_message(msg)
+            else:
+                print(f"[SMTP] Connecting via STARTTLS to {self.smtp_host}:{self.smtp_port}...")
+                with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+                    server.starttls()
+                    server.login(self.smtp_user, self.smtp_password)
+                    server.send_message(msg)
             
             print(f"[SMTP] ✓ Email sent successfully to {to_email}")
 
