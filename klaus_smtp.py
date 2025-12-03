@@ -2,6 +2,7 @@
 Klaus SMTP Email Client
 Sends collection emails via SMTP when Gmail API credentials are not available
 Saves sent emails to Sent folder via IMAP
+v2 - Added logging for debugging
 """
 
 import os
