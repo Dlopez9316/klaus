@@ -72,7 +72,7 @@
     "payment_plan_always_requires_approval": true,
     "service_suspension_always_requires_approval": true,
     "legal_language_always_requires_approval": true,
-    "vip_always_requires_approval": false,
+    "vip_always_requires_approval": true,
     "cc_daniel_on_vip": true,
     "cc_daniel_on_escalations": true
   },
@@ -91,7 +91,8 @@
     "Coral Rock Development",
     "Harbor Group International",
     "Terra Group",
-    "Kittle"
+    "Kittle",
+    "Danny Test Company"
   ],
   
   "problem_accounts": [
