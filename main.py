@@ -1415,6 +1415,32 @@ async def test_notification(request: NotificationTestRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.get("/admin/twilio-config")
+async def get_twilio_config():
+    """Debug endpoint to check Twilio WhatsApp configuration"""
+    twilio_from = os.getenv("TWILIO_WHATSAPP_FROM", "")
+    twilio_to = os.getenv("TWILIO_WHATSAPP_TO", "")
+
+    # Mask numbers for security but show format
+    def mask_number(num):
+        if not num:
+            return "NOT SET"
+        if len(num) > 8:
+            return num[:12] + "****" + num[-4:]
+        return "****"
+
+    return {
+        "status": "success",
+        "twilio_sid_set": bool(os.getenv("TWILIO_ACCOUNT_SID")),
+        "twilio_token_set": bool(os.getenv("TWILIO_AUTH_TOKEN")),
+        "twilio_whatsapp_from": mask_number(twilio_from),
+        "twilio_whatsapp_to": mask_number(twilio_to),
+        "from_format_ok": twilio_from.startswith("whatsapp:+") if twilio_from else False,
+        "to_format_ok": twilio_to.startswith("whatsapp:+") if twilio_to else False,
+        "twilio_client_initialized": notification_service.twilio_client is not None
+    }
+
 # ============================================================================
 # KLAUS COLLECTIONS ENDPOINTS (NEW)
 # ============================================================================
