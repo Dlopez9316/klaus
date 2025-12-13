@@ -555,6 +555,67 @@ def schedule_email_response(email: dict, invoices: list):
     print(f"[KLAUS EMAIL] Queued response to '{email.get('from', 'unknown')}' - will send in {delay_minutes:.1f} minutes")
 
 
+def should_ignore_email(email: dict) -> bool:
+    """
+    Check if an email should be ignored (system notifications, newsletters, etc.)
+    Returns True if the email should NOT be responded to.
+    """
+    from_email = email.get('from', '').lower()
+    subject = email.get('subject', '').lower()
+
+    # Domains/senders to ignore (system notifications)
+    ignored_senders = [
+        'noreply@',
+        'no-reply@',
+        'notifications@',
+        'updates@',
+        'newsletter@',
+        'marketing@',
+        'hubspot.com',
+        'stripe.com',
+        'plaid.com',
+        'google.com',
+        'github.com',
+        'railway.app',
+        'vercel.com',
+        'cloudflare.com',
+        'amazon.com',
+        'aws.amazon.com',
+        'mailer-daemon',
+        'postmaster@',
+    ]
+
+    # Check sender
+    for ignored in ignored_senders:
+        if ignored in from_email:
+            return True
+
+    # Subject patterns to ignore
+    ignored_subjects = [
+        'you received a',  # HubSpot payment notifications
+        'payment received',
+        'subscription payment',
+        'password reset',
+        'verify your email',
+        'confirm your',
+        'security alert',
+        'sign-in',
+        'login',
+        'two-factor',
+        '2fa',
+        'unsubscribe',
+        'newsletter',
+        'weekly digest',
+        'daily summary',
+    ]
+
+    for ignored in ignored_subjects:
+        if ignored in subject:
+            return True
+
+    return False
+
+
 async def poll_emails_for_response():
     """
     Poll for new unread emails every 5 minutes.
@@ -581,16 +642,34 @@ async def poll_emails_for_response():
             print(f"[KLAUS EMAIL POLL] {len(emails)} unread emails already queued for response")
             return
 
-        print(f"[KLAUS EMAIL POLL] Found {len(new_emails)} new unread emails")
+        # Filter out system notifications and automated emails
+        client_emails = []
+        ignored_count = 0
+        for email in new_emails:
+            if should_ignore_email(email):
+                ignored_count += 1
+                # Mark as read so we don't keep checking it
+                klaus_gmail.mark_as_read(email.get('id'))
+            else:
+                client_emails.append(email)
+
+        if ignored_count > 0:
+            print(f"[KLAUS EMAIL POLL] Ignored {ignored_count} system/notification emails")
+
+        if not client_emails:
+            print(f"[KLAUS EMAIL POLL] No client emails to respond to")
+            return
+
+        print(f"[KLAUS EMAIL POLL] Found {len(client_emails)} client emails to process")
 
         # Get invoices for context (cached for all emails in this batch)
         invoices = await hubspot_client.get_invoices()
 
         # Queue each email for delayed response
-        for email in new_emails:
+        for email in client_emails:
             schedule_email_response(email, invoices)
 
-        print(f"[KLAUS EMAIL POLL] Queued {len(new_emails)} emails for delayed response")
+        print(f"[KLAUS EMAIL POLL] Queued {len(client_emails)} emails for delayed response")
 
     except Exception as e:
         import traceback
