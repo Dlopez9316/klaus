@@ -166,6 +166,9 @@ scheduler.start()
 # Format: {email_id: {email_data, scheduled_time, invoices}}
 pending_email_responses = {}
 
+# Track when server started - only respond to emails received AFTER this time
+server_start_time = datetime.now()
+
 # Initialize and register voice routes
 if klaus_voice:
     init_voice_routes(
@@ -557,11 +560,29 @@ def schedule_email_response(email: dict, invoices: list):
 
 def should_ignore_email(email: dict) -> bool:
     """
-    Check if an email should be ignored (system notifications, newsletters, etc.)
+    Check if an email should be ignored (system notifications, newsletters, old emails, etc.)
     Returns True if the email should NOT be responded to.
     """
     from_email = email.get('from', '').lower()
     subject = email.get('subject', '').lower()
+    email_date_str = email.get('date', '')
+
+    # Ignore emails received BEFORE the server started (old emails)
+    if email_date_str:
+        try:
+            from email.utils import parsedate_to_datetime
+            email_date = parsedate_to_datetime(email_date_str)
+            # Make server_start_time timezone-aware if email_date is
+            if email_date.tzinfo is not None:
+                from datetime import timezone
+                server_start_aware = server_start_time.replace(tzinfo=timezone.utc)
+                if email_date < server_start_aware:
+                    return True
+            else:
+                if email_date.replace(tzinfo=None) < server_start_time:
+                    return True
+        except Exception:
+            pass  # If we can't parse the date, continue with other checks
 
     # Domains/senders to ignore (system notifications)
     ignored_senders = [
