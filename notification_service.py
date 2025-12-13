@@ -216,10 +216,60 @@ class NotificationService:
             for s in suggestions[:3]:
                 message += f"\n• {s['transaction_name'][:25]} → {s['company_name'][:25]}"
         
-        message += "\n\n👉 Review in dashboard: http://localhost:8000"
-        
+        dashboard_url = os.getenv("DASHBOARD_URL", "https://klaus-production.up.railway.app")
+        message += f"\n\n👉 Review in dashboard: {dashboard_url}"
+
         self.twilio_client.messages.create(
             from_=self.twilio_whatsapp_from,
             body=message,
             to=self.twilio_whatsapp_to
         )
+
+    def send_klaus_report(
+        self,
+        emails_sent: int,
+        pending_approvals: int,
+        emails_processed: int,
+        emails_responded: int,
+        needs_review: int,
+        via_whatsapp: bool = True
+    ) -> Dict:
+        """Send Klaus collections activity report via WhatsApp"""
+
+        results = {"whatsapp": {"sent": False, "error": None}}
+
+        if not via_whatsapp or not self.twilio_whatsapp_to:
+            return results
+
+        try:
+            dashboard_url = os.getenv("DASHBOARD_URL", "https://klaus-production.up.railway.app")
+
+            message = f"""
+📧 *Klaus Collections Report*
+
+📤 *Outgoing Reminders:*
+• {emails_sent} reminder emails sent
+• {pending_approvals} emails pending your approval
+
+📥 *Incoming Email Processing:*
+• {emails_processed} emails processed
+• {emails_responded} auto-responded
+• {needs_review} need manual review
+
+"""
+            if pending_approvals > 0 or needs_review > 0:
+                message += f"⚠️ *Action Required:* {pending_approvals + needs_review} items need attention\n"
+
+            message += f"\n👉 Review: {dashboard_url}/klaus/emails/pending"
+
+            self.twilio_client.messages.create(
+                from_=self.twilio_whatsapp_from,
+                body=message,
+                to=self.twilio_whatsapp_to
+            )
+            results["whatsapp"]["sent"] = True
+
+        except Exception as e:
+            results["whatsapp"]["error"] = str(e)
+
+        return results

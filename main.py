@@ -475,17 +475,118 @@ async def scheduled_full_run():
     1. Reconciliation matching
     2. Klaus collections (send reminders)
     3. Klaus email processing (respond to incoming)
+    4. Send WhatsApp report
     """
     print(f"[SCHEDULER] Starting full scheduled run at {datetime.now().isoformat()}")
 
-    # Run reconciliation
+    # Track stats for report
+    klaus_stats = {
+        'emails_sent': 0,
+        'pending_approvals': 0,
+        'emails_processed': 0,
+        'emails_responded': 0,
+        'needs_review': 0
+    }
+
+    # Run reconciliation (this sends its own WhatsApp report)
     await scheduled_reconciliation()
 
-    # Run Klaus collections
-    await scheduled_klaus_collections()
+    # Run Klaus collections and track stats
+    try:
+        invoices = await hubspot_client.get_invoices()
+        analysis = klaus_engine.analyze_overdue_invoices(invoices)
 
-    # Process incoming emails
-    await scheduled_email_processing()
+        emails_sent = 0
+        for email_action in analysis['autonomous_emails']:
+            if klaus_gmail:
+                invoice_map = {}
+                for inv in email_action.get('invoices', []):
+                    inv_number = str(inv.get('invoice_number', '')).strip()
+                    if inv_number.upper().startswith('INV-'):
+                        inv_number = inv_number[4:].strip()
+                    hubspot_url = inv.get('hubspot_url', '')
+                    if inv_number and hubspot_url:
+                        invoice_map[inv_number] = hubspot_url
+
+                message = email_action['recommended_message']
+                lines = message.split('\n')
+                if lines and lines[0].startswith('Subject:'):
+                    subject = lines[0].replace('Subject:', '').strip()
+                    body = '\n'.join(lines[1:]).strip()
+                else:
+                    subject = "Payment Reminder"
+                    body = message
+
+                cc_email = None
+                if email_action.get('is_vip'):
+                    cc_email = 'daniel@leveragelivelocal.com'
+
+                result = klaus_gmail.send_email(
+                    to_email=email_action.get('contact_email'),
+                    to_name=email_action.get('contact_name'),
+                    subject=subject,
+                    body=body,
+                    cc=cc_email,
+                    invoice_map=invoice_map
+                )
+
+                if result['status'] == 'success':
+                    emails_sent += 1
+                    for inv in email_action.get('invoices', []):
+                        klaus_engine.log_communication(
+                            invoice_id=inv.get('invoice_id'),
+                            company_name=inv.get('company_name'),
+                            method='email',
+                            message_type='reminder',
+                            approved_by='autonomous'
+                        )
+
+        klaus_stats['emails_sent'] = emails_sent
+        klaus_stats['pending_approvals'] = len(analysis['pending_approvals'])
+        print(f"[KLAUS] Collections: {emails_sent} sent, {len(analysis['pending_approvals'])} pending")
+
+    except Exception as e:
+        import traceback
+        print(f"[KLAUS] Collections failed: {e}")
+        traceback.print_exc()
+
+    # Process incoming emails and track stats
+    try:
+        if klaus_gmail and klaus_email_responder:
+            emails = klaus_gmail.get_recent_emails(query="in:inbox is:unread", max_results=20)
+            if emails:
+                invoices = await hubspot_client.get_invoices()
+                responded = 0
+                needs_review = 0
+                for email in emails:
+                    result = await process_incoming_email(email, invoices)
+                    if result.get('response_sent'):
+                        responded += 1
+                    if result.get('requires_manual_review'):
+                        needs_review += 1
+
+                klaus_stats['emails_processed'] = len(emails)
+                klaus_stats['emails_responded'] = responded
+                klaus_stats['needs_review'] = needs_review
+                print(f"[KLAUS] Email processing: {responded}/{len(emails)} responded, {needs_review} need review")
+    except Exception as e:
+        import traceback
+        print(f"[KLAUS] Email processing failed: {e}")
+        traceback.print_exc()
+
+    # Send WhatsApp report
+    try:
+        notification_service.send_klaus_report(
+            emails_sent=klaus_stats['emails_sent'],
+            pending_approvals=klaus_stats['pending_approvals'],
+            emails_processed=klaus_stats['emails_processed'],
+            emails_responded=klaus_stats['emails_responded'],
+            needs_review=klaus_stats['needs_review'],
+            via_whatsapp=True
+        )
+        print("[SCHEDULER] WhatsApp report sent")
+    except Exception as e:
+        print(f"[SCHEDULER] WhatsApp report failed: {e}")
 
     print(f"[SCHEDULER] Full scheduled run complete at {datetime.now().isoformat()}")
 
