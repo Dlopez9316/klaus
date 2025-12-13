@@ -78,15 +78,71 @@ class ReconciliationEngine:
         print(f"Denied: {transaction_description[:50]}... -> Invoice {invoice_id}")
     
     def is_match_denied(self, transaction_description: str, invoice_id: str) -> bool:
-        """Check if this specific transaction-invoice pair has been denied"""
+        """
+        Check if this specific transaction-invoice pair has been denied.
+        Uses fuzzy matching to block similar transactions from the same payer.
+        """
         if 'denied_matches' not in self.memory:
             return False
-        
+
+        trans_lower = transaction_description.lower()
+
+        # Extract payer identifier from current transaction
+        current_payer = self._extract_payer_id(trans_lower)
+
         for denial in self.memory['denied_matches']:
-            if (denial['transaction_description'] == transaction_description and 
-                denial['invoice_id'] == invoice_id):
+            denied_trans = denial['transaction_description'].lower()
+            denied_invoice = denial['invoice_id']
+
+            # Exact match (same transaction, same invoice)
+            if denied_trans == trans_lower and denied_invoice == invoice_id:
                 return True
+
+            # Extract payer from denied transaction
+            denied_payer = self._extract_payer_id(denied_trans)
+
+            # If same payer and same invoice - block it
+            if denied_invoice == invoice_id and current_payer and denied_payer:
+                if current_payer == denied_payer:
+                    return True
+
+            # Also block if same payer pattern is trying to match ANY invoice it was denied for
+            # This handles cases where the same company keeps being suggested for wrong invoices
+            if current_payer and denied_payer and current_payer == denied_payer:
+                # Same payer was denied for some invoice - block for this invoice too
+                return True
+
         return False
+
+    def _extract_payer_id(self, transaction_lower: str) -> Optional[str]:
+        """Extract a payer identifier from transaction description"""
+        # HarborGroup pattern
+        if 'harborgroup' in transaction_lower:
+            return 'harborgroup'
+        # Panama Flats
+        if 'panama flats' in transaction_lower:
+            return 'panama_flats'
+        # Garrett Companies
+        if 'garrett companie' in transaction_lower:
+            return 'garrett_companies'
+        # ORIG CO NAME extraction
+        if 'orig co name:' in transaction_lower:
+            try:
+                co_name = transaction_lower.split('orig co name:')[1].split()[0].strip()
+                if co_name:
+                    return f'orig_{co_name}'
+            except:
+                pass
+        # Fedwire with specific bank
+        if 'fedwire' in transaction_lower:
+            if 'huntington' in transaction_lower:
+                return 'fedwire_huntington'
+            if 'bank of america' in transaction_lower:
+                return 'fedwire_boa'
+        # HGI pattern
+        if 'hgi multifamily' in transaction_lower:
+            return 'hgi_multifamily'
+        return None
     
     def mark_transaction_accounted(self, transaction_description: str, transaction_id: Optional[str], 
                                    amount: float, date: str, company_name: str, invoice_id: Optional[str] = None):
