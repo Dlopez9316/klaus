@@ -129,7 +129,7 @@ class KlausEngine:
     def analyze_invoice(self, invoice: Dict) -> Dict:
         """
         Analyze an unpaid invoice and determine action needed
-        
+
         Returns:
         {
             'invoice_id': str (HubSpot ID),
@@ -148,10 +148,36 @@ class KlausEngine:
             'previous_contacts': list of contact dates
         }
         """
-        
+
         # Get HubSpot ID and actual invoice number
         invoice_id = invoice.get('id')
         invoice_number = self._extract_invoice_number(invoice)
+
+        # Check if invoice has been manually approved/resolved - skip if so
+        if self.is_invoice_approved(invoice_id):
+            company_name = invoice.get('company_name', 'Unknown')
+            contact_name = self._extract_contact_name(invoice)
+            contact_email = self._extract_contact_email(invoice)
+            return {
+                'invoice_id': invoice_id,
+                'invoice_number': invoice_number,
+                'company_name': company_name,
+                'contact_name': contact_name,
+                'contact_email': contact_email,
+                'amount': 0,
+                'balance_due': 0,
+                'days_overdue': 0,
+                'due_date': invoice.get('due_date'),
+                'action_required': 'none',
+                'urgency': 'low',
+                'requires_approval': False,
+                'escalation_level': 0,
+                'contact_count': 0,
+                'last_contact_date': None,
+                'previous_contacts': [],
+                'hubspot_url': invoice.get('hubspot_url', ''),
+                'skip_reason': 'Invoice manually approved/resolved'
+            }
         
         # Get balance due (the actual amount owed)
         balance_due = float(invoice.get('balance_due', 0))
@@ -257,6 +283,33 @@ class KlausEngine:
     def _get_contact_history(self, invoice_id: str) -> List[Dict]:
         """Get all previous contacts for this invoice"""
         return [c for c in self.communication_history if c['invoice_id'] == invoice_id]
+
+    def is_invoice_approved(self, invoice_id: str) -> bool:
+        """
+        Check if an invoice has been manually approved/resolved.
+        Returns True if the invoice was marked as approved and should not receive reminders.
+        """
+        for comm in self.communication_history:
+            if comm['invoice_id'] == invoice_id:
+                # Check if approved by user (not autonomous)
+                if comm.get('approved_by') == 'manual':
+                    # Check message type - if it was marked as 'approved' or 'resolved'
+                    msg_type = comm.get('message_type', '')
+                    if msg_type in ['approved', 'resolved', 'paid', 'reconciled']:
+                        return True
+        return False
+
+    def mark_invoice_approved(self, invoice_id: str, company_name: str):
+        """
+        Mark an invoice as approved/resolved - no more reminders will be sent.
+        """
+        self.log_communication(
+            invoice_id=invoice_id,
+            company_name=company_name,
+            method='system',
+            message_type='approved',
+            approved_by='manual'
+        )
     
     def _get_company_contact_history(self, company_name: str) -> List[Dict]:
         """Get all previous contacts for any invoice from this company"""

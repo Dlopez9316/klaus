@@ -369,10 +369,12 @@ async def scheduled_klaus_collections():
     try:
         # Get unpaid invoices from HubSpot (now includes hubspot_url)
         invoices = await hubspot_client.get_invoices()
-        
+
         # Analyze with Klaus
         analysis = klaus_engine.analyze_overdue_invoices(invoices)
-        
+
+        emails_sent = 0
+
         # Process autonomous actions
         for email_action in analysis['autonomous_emails']:
             if klaus_gmail:
@@ -385,7 +387,7 @@ async def scheduled_klaus_collections():
                     hubspot_url = inv.get('hubspot_url', '')
                     if inv_number and hubspot_url:
                         invoice_map[inv_number] = hubspot_url
-                
+
                 # Extract subject from recommended_message
                 message = email_action['recommended_message']
                 lines = message.split('\n')
@@ -395,12 +397,12 @@ async def scheduled_klaus_collections():
                 else:
                     subject = "Payment Reminder"
                     body = message
-                
+
                 # Determine CC
                 cc_email = None
                 if email_action.get('is_vip'):
                     cc_email = 'daniel@leveragelivelocal.com'
-                
+
                 # Send email with hyperlinked invoices
                 result = klaus_gmail.send_email(
                     to_email=email_action.get('contact_email'),
@@ -410,8 +412,9 @@ async def scheduled_klaus_collections():
                     cc=cc_email,
                     invoice_map=invoice_map
                 )
-                
+
                 if result['status'] == 'success':
+                    emails_sent += 1
                     # Log communication for each invoice
                     for inv in email_action.get('invoices', []):
                         klaus_engine.log_communication(
@@ -421,11 +424,70 @@ async def scheduled_klaus_collections():
                             message_type='reminder',
                             approved_by='autonomous'
                         )
-        
-        print(f"Klaus collections: {len(analysis['autonomous_emails'])} emails sent (hyperlinked), {len(analysis['pending_approvals'])} pending approval")
-    
+                else:
+                    print(f"[KLAUS] Failed to send email to {email_action.get('contact_email')}: {result.get('error')}")
+
+        print(f"[KLAUS] Collections complete: {emails_sent}/{len(analysis['autonomous_emails'])} emails sent, {len(analysis['pending_approvals'])} pending approval")
+
     except Exception as e:
-        print(f"Klaus collections failed: {e}")
+        import traceback
+        print(f"[KLAUS] Collections failed: {e}")
+        traceback.print_exc()
+
+
+async def scheduled_email_processing():
+    """Scheduled job to process incoming emails"""
+    try:
+        if not klaus_gmail or not klaus_email_responder:
+            print("[KLAUS] Email processing skipped - Gmail or responder not configured")
+            return
+
+        # Get unread emails
+        emails = klaus_gmail.get_recent_emails(
+            query="in:inbox is:unread",
+            max_results=20
+        )
+
+        if not emails:
+            print("[KLAUS] No unread emails to process")
+            return
+
+        # Get invoices for context
+        invoices = await hubspot_client.get_invoices()
+
+        responded = 0
+        for email in emails:
+            result = await process_incoming_email(email, invoices)
+            if result.get('response_sent'):
+                responded += 1
+
+        print(f"[KLAUS] Email processing complete: {responded}/{len(emails)} responded autonomously")
+
+    except Exception as e:
+        import traceback
+        print(f"[KLAUS] Email processing failed: {e}")
+        traceback.print_exc()
+
+
+async def scheduled_full_run():
+    """
+    Combined scheduled job that runs:
+    1. Reconciliation matching
+    2. Klaus collections (send reminders)
+    3. Klaus email processing (respond to incoming)
+    """
+    print(f"[SCHEDULER] Starting full scheduled run at {datetime.now().isoformat()}")
+
+    # Run reconciliation
+    await scheduled_reconciliation()
+
+    # Run Klaus collections
+    await scheduled_klaus_collections()
+
+    # Process incoming emails
+    await scheduled_email_processing()
+
+    print(f"[SCHEDULER] Full scheduled run complete at {datetime.now().isoformat()}")
 
 # ============================================================================
 # MAIN ROUTES
@@ -633,11 +695,17 @@ async def approve_match(request: ApprovalRequest):
                 invoice_id=request.invoice_id
             )
 
+        # Also mark in Klaus system so no more reminders are sent
+        klaus_engine.mark_invoice_approved(
+            invoice_id=request.invoice_id,
+            company_name=request.company_name or 'Unknown'
+        )
+
         return {
             "status": "success",
             "message": f"Invoice {request.invoice_id} marked as reconciled"
         }
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -667,6 +735,12 @@ async def approve_bulk_matches(request: BulkApprovalRequest):
                         invoice_id=approval.invoice_id
                     )
 
+                # Also mark in Klaus system so no more reminders are sent
+                klaus_engine.mark_invoice_approved(
+                    invoice_id=approval.invoice_id,
+                    company_name=approval.company_name or 'Unknown'
+                )
+
                 success_count += 1
             except Exception as e:
                 errors.append({
@@ -680,7 +754,7 @@ async def approve_bulk_matches(request: BulkApprovalRequest):
             "failed": len(errors),
             "errors": errors
         }
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1081,38 +1155,39 @@ async def delete_association(transaction_name: str):
 
 @app.post("/schedule", response_model=dict)
 async def set_schedule(request: ScheduleRequest):
-    """Set automated reconciliation schedule"""
+    """Set automated reconciliation + Klaus collections schedule"""
     try:
         scheduler.remove_all_jobs()
-        
+
         if request.frequency != 'none':
             hour, minute = map(int, request.time.split(':'))
-            
+
             if request.frequency == 'daily':
                 trigger = CronTrigger(hour=hour, minute=minute)
             elif request.frequency == 'weekly':
                 trigger = CronTrigger(day_of_week='mon', hour=hour, minute=minute)
             elif request.frequency == 'monthly':
                 trigger = CronTrigger(day=1, hour=hour, minute=minute)
-            
-            scheduler.add_job(scheduled_reconciliation, trigger)
-            
-            # Also schedule Klaus collections
-            if klaus_gmail:
-                scheduler.add_job(scheduled_klaus_collections, trigger)
-        
+
+            # Use combined job that runs everything together
+            scheduler.add_job(scheduled_full_run, trigger, id='full_run')
+
+            print(f"[SCHEDULE] Set to {request.frequency} at {request.time}")
+            print(f"[SCHEDULE] Will run: Reconciliation + Klaus Collections + Email Processing")
+
         save_schedule_config({
             'frequency': request.frequency,
             'time': request.time
         })
-        
+
         return {
             "status": "success",
             "message": f"Schedule set to {request.frequency} at {request.time}",
             "frequency": request.frequency,
-            "time": request.time
+            "time": request.time,
+            "jobs": ["reconciliation", "klaus_collections", "email_processing"]
         }
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1125,6 +1200,27 @@ async def get_schedule():
         "frequency": config.get('frequency', 'none'),
         "time": config.get('time', '09:00')
     }
+
+
+@app.post("/schedule/run-now", response_model=dict)
+async def run_schedule_now():
+    """
+    Manually trigger the scheduled job right now.
+    Runs: Reconciliation + Klaus Collections + Email Processing
+    """
+    try:
+        print("[MANUAL RUN] Starting full run...")
+        await scheduled_full_run()
+        return {
+            "status": "success",
+            "message": "Full run completed",
+            "ran_at": datetime.now().isoformat(),
+            "jobs": ["reconciliation", "klaus_collections", "email_processing"]
+        }
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/transactions", response_model=dict)
 async def get_transactions(days: int = 30):
@@ -1334,7 +1430,7 @@ async def klaus_approve_email(request: KlausEmailApprovalRequest):
     try:
         if not klaus_gmail:
             raise HTTPException(status_code=503, detail="Klaus Gmail not configured")
-        
+
         if request.approve:
             # Send the email
             # Would need to get email details from pending queue
@@ -1347,7 +1443,62 @@ async def klaus_approve_email(request: KlausEmailApprovalRequest):
                 "status": "success",
                 "message": "Email denied"
             }
-    
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class KlausInvoiceApprovalRequest(BaseModel):
+    invoice_id: str
+    company_name: Optional[str] = None
+
+
+@app.post("/klaus/invoice/approve", response_model=dict)
+async def klaus_mark_invoice_approved(request: KlausInvoiceApprovalRequest):
+    """
+    Mark an invoice as approved/resolved - no more reminders will be sent.
+    Use this when you approve a match or want to stop reminders for an invoice.
+    """
+    try:
+        company_name = request.company_name or "Unknown"
+
+        # If company name not provided, try to look it up
+        if not request.company_name:
+            invoices = await hubspot_client.get_invoices()
+            invoice = next((inv for inv in invoices if inv['id'] == request.invoice_id), None)
+            if invoice:
+                company_name = invoice.get('company_name', 'Unknown')
+
+        klaus_engine.mark_invoice_approved(
+            invoice_id=request.invoice_id,
+            company_name=company_name
+        )
+
+        return {
+            "status": "success",
+            "message": f"Invoice {request.invoice_id} marked as approved - no more reminders will be sent",
+            "invoice_id": request.invoice_id
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/klaus/invoice/{invoice_id}/status", response_model=dict)
+async def klaus_get_invoice_status(invoice_id: str):
+    """Get the Klaus communication status for an invoice"""
+    try:
+        is_approved = klaus_engine.is_invoice_approved(invoice_id)
+        contact_history = klaus_engine._get_contact_history(invoice_id)
+
+        return {
+            "status": "success",
+            "invoice_id": invoice_id,
+            "is_approved": is_approved,
+            "contact_count": len(contact_history),
+            "contacts": contact_history
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1357,20 +1508,240 @@ async def klaus_get_inbox():
     try:
         if not klaus_gmail:
             raise HTTPException(status_code=503, detail="Klaus Gmail not configured")
-        
+
         emails = klaus_gmail.get_recent_emails(
             query="in:inbox is:unread",
             max_results=50
         )
-        
+
         return {
             "status": "success",
             "count": len(emails),
             "emails": emails
         }
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def process_incoming_email(email: dict, invoices: list) -> dict:
+    """
+    Process an incoming email and determine autonomous response.
+    Returns response details or None if requires manual review.
+    """
+    email_body = email.get('body', '')
+    from_email = email.get('from', '')
+    subject = email.get('subject', '')
+    thread_id = email.get('thread_id', '')
+    message_id = email.get('id', '')
+
+    # Extract invoice number if mentioned
+    invoice_number = klaus_gmail.extract_invoice_number(email_body)
+
+    # Find matching invoice
+    matching_invoice = None
+    if invoice_number:
+        for inv in invoices:
+            inv_num = str(inv.get('number', '') or inv.get('invoice_number', ''))
+            if invoice_number in inv_num or inv_num.endswith(invoice_number):
+                matching_invoice = inv
+                break
+
+    context = {
+        'invoice_number': invoice_number or 'Unknown',
+        'amount': matching_invoice.get('amount', 0) if matching_invoice else 0,
+        'company_name': matching_invoice.get('company_name', 'Unknown') if matching_invoice else 'Unknown'
+    }
+
+    # Detect email type
+    is_payment_confirmation = klaus_gmail.detect_payment_confirmation(email_body)
+    document_requested = klaus_gmail.detect_document_request(email_body)
+
+    response_data = {
+        'email_id': message_id,
+        'thread_id': thread_id,
+        'from': from_email,
+        'subject': subject,
+        'detected_type': 'unknown',
+        'action_taken': None,
+        'response_sent': False,
+        'requires_manual_review': False
+    }
+
+    # Handle payment confirmation
+    if is_payment_confirmation:
+        response_data['detected_type'] = 'payment_confirmation'
+        if matching_invoice and klaus_email_responder:
+            response_text = klaus_email_responder.craft_response(
+                email_body, context, scenario='payment_confirmation'
+            )
+            # Send reply
+            result = klaus_gmail.reply_to_email(
+                thread_id=thread_id,
+                message_id=message_id,
+                to_email=from_email.split('<')[-1].replace('>', '').strip(),
+                subject=subject,
+                body=response_text
+            )
+            if result['status'] == 'success':
+                response_data['response_sent'] = True
+                response_data['action_taken'] = 'Sent payment confirmation acknowledgement'
+                klaus_gmail.mark_as_read(message_id)
+        else:
+            response_data['requires_manual_review'] = True
+
+    # Handle document request
+    elif document_requested:
+        response_data['detected_type'] = f'document_request_{document_requested}'
+        response_data['action_taken'] = f'Document requested: {document_requested}'
+        response_data['requires_manual_review'] = True  # Documents require approval
+
+    # Handle other emails - use AI to craft response
+    elif klaus_email_responder:
+        # Check for common scenarios
+        email_lower = email_body.lower()
+
+        if any(phrase in email_lower for phrase in ['already paid', 'sent payment', 'paid this']):
+            response_data['detected_type'] = 'claims_already_paid'
+            response_text = klaus_email_responder.craft_response(
+                email_body, context, scenario='claims_paid'
+            )
+        elif any(phrase in email_lower for phrase in ['need more time', 'cash flow', 'next month', 'delay']):
+            response_data['detected_type'] = 'needs_more_time'
+            response_text = klaus_email_responder.craft_response(
+                email_body, context, scenario='needs_more_time'
+            )
+        elif any(phrase in email_lower for phrase in ['dispute', 'incorrect', 'wrong', 'error']):
+            response_data['detected_type'] = 'dispute'
+            response_data['requires_manual_review'] = True
+            response_data['action_taken'] = 'Dispute detected - requires Daniel review'
+            return response_data
+        else:
+            response_data['detected_type'] = 'general_inquiry'
+            response_text = klaus_email_responder.craft_response(
+                email_body, context, scenario='general'
+            )
+
+        # Send response for non-dispute cases
+        if not response_data.get('requires_manual_review'):
+            to_address = from_email.split('<')[-1].replace('>', '').strip()
+            result = klaus_gmail.reply_to_email(
+                thread_id=thread_id,
+                message_id=message_id,
+                to_email=to_address,
+                subject=subject,
+                body=response_text
+            )
+            if result['status'] == 'success':
+                response_data['response_sent'] = True
+                response_data['action_taken'] = f'Sent autonomous response ({response_data["detected_type"]})'
+                klaus_gmail.mark_as_read(message_id)
+                klaus_gmail.add_label(message_id, 'Klaus-Responded')
+
+    return response_data
+
+
+@app.post("/klaus/emails/process", response_model=dict)
+async def klaus_process_incoming_emails():
+    """
+    Process incoming emails autonomously.
+    Klaus will analyze and respond to emails based on their content.
+    - Payment confirmations: Acknowledge and note
+    - Document requests: Flag for manual sending
+    - "Already paid" claims: Ask for payment details to verify
+    - Needs more time: Ask for expected payment date
+    - Disputes: Flag for Daniel's review
+    """
+    try:
+        if not klaus_gmail:
+            raise HTTPException(status_code=503, detail="Klaus Gmail not configured")
+
+        # Get unread emails
+        emails = klaus_gmail.get_recent_emails(
+            query="in:inbox is:unread",
+            max_results=20
+        )
+
+        if not emails:
+            return {
+                "status": "success",
+                "message": "No unread emails to process",
+                "processed": 0
+            }
+
+        # Get invoices for context
+        invoices = await hubspot_client.get_invoices()
+
+        results = []
+        for email in emails:
+            result = await process_incoming_email(email, invoices)
+            results.append(result)
+
+        responded = sum(1 for r in results if r.get('response_sent'))
+        needs_review = sum(1 for r in results if r.get('requires_manual_review'))
+
+        return {
+            "status": "success",
+            "processed": len(results),
+            "autonomous_responses_sent": responded,
+            "requires_manual_review": needs_review,
+            "details": results
+        }
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/klaus/voice/setup-inbound", response_model=dict)
+async def klaus_setup_inbound_calls():
+    """
+    Configure Klaus to handle inbound phone calls.
+    This attaches an AI assistant to the Vapi phone number so people can call Klaus.
+    """
+    try:
+        if not klaus_voice:
+            raise HTTPException(status_code=503, detail="Klaus Voice not configured")
+
+        if not os.getenv("VAPI_PHONE_NUMBER_ID"):
+            raise HTTPException(status_code=400, detail="VAPI_PHONE_NUMBER_ID not set in environment")
+
+        # Create or update assistant for inbound calls
+        assistant_id = klaus_voice.create_or_update_assistant(is_inbound=True)
+        if not assistant_id:
+            raise HTTPException(status_code=500, detail="Failed to create/update assistant")
+
+        # Attach assistant to phone number
+        result = klaus_voice.setup_inbound_handling(assistant_id)
+
+        if result.get('status') == 'success':
+            return {
+                "status": "success",
+                "message": "Klaus is now configured to answer inbound calls",
+                "assistant_id": assistant_id,
+                "phone_number_id": os.getenv("VAPI_PHONE_NUMBER_ID")
+            }
+        else:
+            raise HTTPException(status_code=500, detail=result.get('error', 'Unknown error'))
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/klaus/voice/status", response_model=dict)
+async def klaus_voice_status():
+    """Get the status of Klaus Voice configuration"""
+    return {
+        "status": "success",
+        "voice_configured": klaus_voice is not None,
+        "vapi_api_key_set": bool(os.getenv("VAPI_API_KEY")),
+        "vapi_phone_number_id_set": bool(os.getenv("VAPI_PHONE_NUMBER_ID")),
+        "vapi_assistant_id_set": bool(os.getenv("VAPI_ASSISTANT_ID")),
+        "call_history_count": len(klaus_voice.call_history) if klaus_voice else 0
+    }
+
 
 @app.post("/klaus/call/schedule", response_model=dict)
 async def klaus_schedule_call(request: KlausCallRequest):
@@ -1378,7 +1749,7 @@ async def klaus_schedule_call(request: KlausCallRequest):
     try:
         if not klaus_voice:
             raise HTTPException(status_code=503, detail="Klaus Voice not configured")
-        
+
         # Get invoice details
         invoices = await hubspot_client.get_invoices()
         invoice = next((inv for inv in invoices if inv['id'] == request.invoice_id), None)
@@ -1706,30 +2077,42 @@ async def startup_event():
 
     # Setup Klaus credentials from environment
     setup_klaus_credentials()
-    
+
     # Load scheduled jobs
     config = load_schedule_config()
     if config['frequency'] != 'none':
         try:
             hour, minute = map(int, config['time'].split(':'))
-            
+
             if config['frequency'] == 'daily':
                 trigger = CronTrigger(hour=hour, minute=minute)
             elif config['frequency'] == 'weekly':
                 trigger = CronTrigger(day_of_week='mon', hour=hour, minute=minute)
             elif config['frequency'] == 'monthly':
                 trigger = CronTrigger(day=1, hour=hour, minute=minute)
-            
-            scheduler.add_job(scheduled_reconciliation, trigger)
-            
-            # Also schedule Klaus if available
-            if klaus_gmail:
-                scheduler.add_job(scheduled_klaus_collections, trigger)
-            
+
+            # Use combined job that runs: Reconciliation + Klaus Collections + Email Processing
+            scheduler.add_job(scheduled_full_run, trigger, id='full_run')
+
             print(f"✓ Loaded schedule: {config['frequency']} at {config['time']}")
+            print(f"  Jobs: Reconciliation + Klaus Collections + Email Processing")
         except Exception as e:
             print(f"✗ Failed to load schedule: {e}")
-    
+
+    # Setup Vapi inbound call handling if configured
+    if klaus_voice and os.getenv("VAPI_PHONE_NUMBER_ID"):
+        try:
+            # Create inbound assistant for handling incoming calls
+            inbound_assistant_id = klaus_voice.create_or_update_assistant(is_inbound=True)
+            if inbound_assistant_id:
+                result = klaus_voice.setup_inbound_handling(inbound_assistant_id)
+                if result.get('status') == 'success':
+                    print("✓ Klaus Voice inbound calls configured")
+                else:
+                    print(f"⚠ Klaus Voice inbound setup: {result.get('error', 'unknown error')}")
+        except Exception as e:
+            print(f"⚠ Klaus Voice inbound setup failed: {e}")
+
     print("\n" + "="*60)
     print("Reconciliation Agent + Klaus Collections")
     print("="*60)
@@ -1739,6 +2122,7 @@ async def startup_event():
     print(f"Klaus Drive: {'✓ Active' if klaus_drive else '✗ Disabled'}")
     print(f"Klaus Voice: {'✓ Active' if klaus_voice else '✗ Disabled'}")
     print(f"Email Service: {'✓ Active' if (klaus_gmail or klaus_smtp) else '✗ Disabled'}")
+    print(f"Email Responder: {'✓ Active' if klaus_email_responder else '✗ Disabled'}")
     print("="*60 + "\n")
 
 if __name__ == "__main__":
