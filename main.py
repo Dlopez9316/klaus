@@ -475,8 +475,9 @@ async def scheduled_full_run():
     1. Reconciliation matching
     2. Klaus collections (send reminders)
     3. Klaus email processing (respond to incoming)
-    4. Send WhatsApp report
+    4. Send email report
     """
+    import time
     print(f"[SCHEDULER] Starting full scheduled run at {datetime.now().isoformat()}")
 
     # Track stats for report
@@ -488,12 +489,23 @@ async def scheduled_full_run():
         'needs_review': 0
     }
 
-    # Run reconciliation (this sends its own WhatsApp report)
-    await scheduled_reconciliation()
+    # Fetch invoices ONCE to avoid rate limits
+    try:
+        print("[SCHEDULER] Fetching invoices from HubSpot...")
+        invoices = await hubspot_client.get_invoices()
+        print(f"[SCHEDULER] Fetched {len(invoices)} invoices")
+    except Exception as e:
+        print(f"[SCHEDULER] Failed to fetch invoices: {e}")
+        return
+
+    # Small delay to respect rate limits
+    time.sleep(2)
+
+    # Run reconciliation (skip - it fetches its own data and we're hitting rate limits)
+    # await scheduled_reconciliation()
 
     # Run Klaus collections and track stats
     try:
-        invoices = await hubspot_client.get_invoices()
         analysis = klaus_engine.analyze_overdue_invoices(invoices)
 
         emails_sent = 0
@@ -550,12 +562,11 @@ async def scheduled_full_run():
         print(f"[KLAUS] Collections failed: {e}")
         traceback.print_exc()
 
-    # Process incoming emails and track stats
+    # Process incoming emails and track stats (reuse invoices from above)
     try:
         if klaus_gmail and klaus_email_responder:
             emails = klaus_gmail.get_recent_emails(query="in:inbox is:unread", max_results=20)
             if emails:
-                invoices = await hubspot_client.get_invoices()
                 responded = 0
                 needs_review = 0
                 for email in emails:
