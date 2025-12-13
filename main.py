@@ -1304,24 +1304,31 @@ async def get_schedule():
 
 
 @app.post("/schedule/run-now", response_model=dict)
-async def run_schedule_now():
+async def run_schedule_now(background_tasks: BackgroundTasks):
     """
     Manually trigger the scheduled job right now.
     Runs: Reconciliation + Klaus Collections + Email Processing
+    Runs in background to avoid timeout.
     """
-    try:
-        print("[MANUAL RUN] Starting full run...")
-        await scheduled_full_run()
-        return {
-            "status": "success",
-            "message": "Full run completed",
-            "ran_at": datetime.now().isoformat(),
-            "jobs": ["reconciliation", "klaus_collections", "email_processing"]
-        }
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+    import asyncio
+
+    def run_in_background():
+        """Wrapper to run async function in background"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(scheduled_full_run())
+        finally:
+            loop.close()
+
+    background_tasks.add_task(run_in_background)
+
+    return {
+        "status": "started",
+        "message": "Full run started in background. You'll receive a WhatsApp report when complete.",
+        "started_at": datetime.now().isoformat(),
+        "jobs": ["reconciliation", "klaus_collections", "email_processing"]
+    }
 
 @app.get("/transactions", response_model=dict)
 async def get_transactions(days: int = 30):
