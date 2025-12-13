@@ -514,7 +514,7 @@ Total Amount Due: ${total_balance:,.2f}
 
 Could you please provide an update on when we can expect payment, or let me know if there's a specific issue preventing payment?
 
-I'm available to discuss this directly at 305-209-7218 if that would be helpful.
+I'm available to discuss this directly at 305-902-6154 if that would be helpful.
 
 Best regards,
 {signature}"""
@@ -547,7 +547,7 @@ Total Amount Due: ${total_balance:,.2f}
 Oldest Invoice: {oldest_days} days overdue
 {history_section}This is significantly overdue and requires immediate attention. If we don't receive payment or establish a payment plan within 7 days, we will need to suspend services.
 
-Please contact me immediately at 305-209-7218 to resolve this matter.
+Please contact me immediately at 305-902-6154 to resolve this matter.
 
 Best regards,
 {signature}"""
@@ -582,7 +582,7 @@ Oldest Invoice: {oldest_days} days overdue
 
 Without payment or a commitment to a payment plan within 48 hours, we will be forced to suspend all services.
 
-Please contact me immediately at 305-209-7218 or reply to this email to avoid service interruption.
+Please contact me immediately at 305-902-6154 or reply to this email to avoid service interruption.
 
 Best regards,
 {signature}"""
@@ -650,7 +650,7 @@ Oldest Invoice: {oldest_days} days past due
 
 I understand cash flow timing can be challenging with multiple properties. Could we schedule a quick call to discuss payment timing? I want to make sure we're aligned and can support you however needed.
 
-You can reach me directly at 305-209-7218.
+You can reach me directly at 305-902-6154.
 
 Best regards,
 {signature}"""
@@ -681,7 +681,7 @@ I'd really appreciate if we could get these resolved. I understand things get bu
 
 Can we schedule a call this week to discuss? I'm available at your convenience and want to work with you to get this sorted out.
 
-Please call me at 305-209-7218 or reply to this email.
+Please call me at 305-902-6154 or reply to this email.
 
 Best regards,
 {signature}"""
@@ -784,7 +784,7 @@ Total Amount Due: ${total_balance:,.2f}
 
 Could you please provide an update on when we can expect payment, or let me know if there's a specific issue preventing payment?
 
-I'm available to discuss this directly at 305-209-7218 if that would be helpful.
+I'm available to discuss this directly at 305-902-6154 if that would be helpful.
 
 Best regards,
 {signature}"""
@@ -815,7 +815,7 @@ Total Amount Due: ${total_balance:,.2f}
 Oldest Invoice: {oldest_days} days overdue
 {history_section}This is significantly overdue and requires immediate attention. If we don't receive payment or establish a payment plan within 7 days, we will need to suspend services.
 
-Please contact me immediately at 305-209-7218 to resolve this matter.
+Please contact me immediately at 305-902-6154 to resolve this matter.
 
 Best regards,
 {signature}"""
@@ -848,7 +848,7 @@ Oldest Invoice: {oldest_days} days overdue
 
 Without payment or a commitment to a payment plan within 48 hours, we will be forced to suspend all services.
 
-Please contact me immediately at 305-209-7218 or reply to this email to avoid service interruption.
+Please contact me immediately at 305-902-6154 or reply to this email to avoid service interruption.
 
 Best regards,
 {signature}"""

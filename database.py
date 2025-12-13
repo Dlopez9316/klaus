@@ -237,7 +237,7 @@ def load_klaus_config() -> Dict:
             'name': 'Klaus',
             'company': 'Leverage Live Local',
             'tone': 'professional_friendly',
-            'email_signature': 'Klaus\nAccounts Receivable Specialist\nLeverage Live Local\n\nPhone: 305-209-7218\nEmail: klaus@leveragelivelocal.com'
+            'email_signature': 'Klaus\nAccounts Receivable Specialist\nLeverage Live Local\n\nPhone: 305-902-6154\nEmail: klaus@leveragelivelocal.com'
         },
         'blacklisted_contacts': [],
         'vip_contacts': []
