@@ -232,49 +232,126 @@ class NotificationService:
         emails_processed: int,
         emails_responded: int,
         needs_review: int,
-        via_whatsapp: bool = True
+        via_email: bool = True,
+        via_sms: bool = True
     ) -> Dict:
-        """Send Klaus collections activity report via WhatsApp"""
+        """Send Klaus collections activity report via Email and SMS"""
 
-        results = {"whatsapp": {"sent": False, "error": None}}
+        results = {
+            "email": {"sent": False, "error": None},
+            "sms": {"sent": False, "error": None}
+        }
 
-        if not via_whatsapp or not self.twilio_whatsapp_to:
-            results["whatsapp"]["error"] = "WhatsApp not configured or disabled"
-            return results
+        dashboard_url = os.getenv("DASHBOARD_URL", "https://klaus-production.up.railway.app")
 
-        if not self.twilio_client:
-            results["whatsapp"]["error"] = "Twilio client not initialized"
-            return results
+        # Send Email Report
+        if via_email and self.notification_email:
+            try:
+                html = f"""
+                <html>
+                <head>
+                    <style>
+                        body {{ font-family: Arial, sans-serif; }}
+                        .header {{ background: #6366f1; color: white; padding: 20px; border-radius: 12px; }}
+                        .section {{ background: #f8fafc; padding: 15px; margin: 15px 0; border-radius: 12px; }}
+                        .alert {{ background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 15px 0; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>📧 Klaus Collections Report</h1>
+                    </div>
 
-        try:
-            dashboard_url = os.getenv("DASHBOARD_URL", "https://klaus-production.up.railway.app")
+                    <div class="section">
+                        <h2>📤 Outgoing Reminders</h2>
+                        <p><strong>{emails_sent}</strong> reminder emails sent</p>
+                        <p><strong>{pending_approvals}</strong> emails pending your approval</p>
+                    </div>
 
-            message = f"""
-📧 *Klaus Collections Report*
+                    <div class="section">
+                        <h2>📥 Incoming Email Processing</h2>
+                        <p><strong>{emails_processed}</strong> emails processed</p>
+                        <p><strong>{emails_responded}</strong> auto-responded</p>
+                        <p><strong>{needs_review}</strong> need manual review</p>
+                    </div>
+                """
 
-📤 *Outgoing Reminders:*
-• {emails_sent} reminder emails sent
-• {pending_approvals} emails pending your approval
+                if pending_approvals > 0 or needs_review > 0:
+                    html += f"""
+                    <div class="alert">
+                        <strong>⚠️ Action Required:</strong> {pending_approvals + needs_review} items need your attention
+                    </div>
+                    """
 
-📥 *Incoming Email Processing:*
-• {emails_processed} emails processed
-• {emails_responded} auto-responded
-• {needs_review} need manual review
+                html += f"""
+                    <div style="margin-top: 20px;">
+                        <a href="{dashboard_url}" style="background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px;">Review in Dashboard</a>
+                    </div>
+                </body>
+                </html>
+                """
 
-"""
-            if pending_approvals > 0 or needs_review > 0:
-                message += f"⚠️ *Action Required:* {pending_approvals + needs_review} items need attention\n"
+                subject = f"Klaus Report: {emails_sent} sent, {pending_approvals + needs_review} need attention"
 
-            message += f"\n👉 Review: {dashboard_url}/klaus/emails/pending"
+                if self.gmail_client:
+                    result = self.gmail_client.send_email(
+                        to_email=self.notification_email,
+                        to_name="Daniel",
+                        subject=subject,
+                        body=html
+                    )
+                    if result.get('status') == 'success':
+                        results["email"]["sent"] = True
+                    else:
+                        results["email"]["error"] = result.get('error')
+                elif self.smtp_user and self.smtp_password:
+                    msg = MIMEMultipart('alternative')
+                    msg['Subject'] = subject
+                    msg['From'] = self.smtp_user
+                    msg['To'] = self.notification_email
+                    msg.attach(MIMEText(html, 'html'))
 
-            self.twilio_client.messages.create(
-                from_=self.twilio_whatsapp_from,
-                body=message,
-                to=self.twilio_whatsapp_to
-            )
-            results["whatsapp"]["sent"] = True
+                    with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
+                        server.starttls()
+                        server.login(self.smtp_user, self.smtp_password)
+                        server.send_message(msg)
+                    results["email"]["sent"] = True
+                else:
+                    results["email"]["error"] = "No email client configured"
 
-        except Exception as e:
-            results["whatsapp"]["error"] = str(e)
+            except Exception as e:
+                results["email"]["error"] = str(e)
+
+        # Send SMS Report
+        if via_sms and self.twilio_client:
+            try:
+                # Get SMS number (strip 'whatsapp:' prefix if present)
+                sms_to = os.getenv("TWILIO_SMS_TO") or os.getenv("TWILIO_WHATSAPP_TO", "")
+                if sms_to.startswith("whatsapp:"):
+                    sms_to = sms_to.replace("whatsapp:", "")
+
+                sms_from = os.getenv("TWILIO_SMS_FROM") or os.getenv("TWILIO_PHONE_NUMBER")
+
+                if not sms_from or not sms_to:
+                    results["sms"]["error"] = "SMS numbers not configured"
+                else:
+                    message = f"""Klaus Report:
+📤 {emails_sent} reminders sent
+⏳ {pending_approvals} pending approval
+📥 {emails_processed} emails processed
+✅ {emails_responded} auto-responded
+👀 {needs_review} need review
+
+{dashboard_url}"""
+
+                    self.twilio_client.messages.create(
+                        from_=sms_from,
+                        body=message,
+                        to=sms_to
+                    )
+                    results["sms"]["sent"] = True
+
+            except Exception as e:
+                results["sms"]["error"] = str(e)
 
         return results
