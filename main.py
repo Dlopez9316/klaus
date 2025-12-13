@@ -574,7 +574,7 @@ async def scheduled_full_run():
         print(f"[KLAUS] Email processing failed: {e}")
         traceback.print_exc()
 
-    # Send Email + SMS report
+    # Send Email report (SMS disabled)
     try:
         report_result = notification_service.send_klaus_report(
             emails_sent=klaus_stats['emails_sent'],
@@ -583,11 +583,13 @@ async def scheduled_full_run():
             emails_responded=klaus_stats['emails_responded'],
             needs_review=klaus_stats['needs_review'],
             via_email=True,
-            via_sms=True
+            via_sms=False
         )
-        print(f"[SCHEDULER] Report sent - Email: {report_result['email']}, SMS: {report_result['sms']}")
+        print(f"[SCHEDULER] Report sent - Email: {report_result['email']}")
     except Exception as e:
+        import traceback
         print(f"[SCHEDULER] Report failed: {e}")
+        traceback.print_exc()
 
     print(f"[SCHEDULER] Full scheduled run complete at {datetime.now().isoformat()}")
 
