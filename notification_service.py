@@ -239,6 +239,11 @@ class NotificationService:
         results = {"whatsapp": {"sent": False, "error": None}}
 
         if not via_whatsapp or not self.twilio_whatsapp_to:
+            results["whatsapp"]["error"] = "WhatsApp not configured or disabled"
+            return results
+
+        if not self.twilio_client:
+            results["whatsapp"]["error"] = "Twilio client not initialized"
             return results
 
         try:
