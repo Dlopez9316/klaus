@@ -17,7 +17,10 @@ from datetime import datetime, timedelta
 import uvicorn
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.date import DateTrigger
 import json
+import random
 
 # Import database module for Railway-compatible storage
 import database as db
@@ -159,7 +162,9 @@ except Exception as e:
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-# Schedule config now stored in database via db module
+# Pending email responses queue - stores emails waiting to be responded to
+# Format: {email_id: {email_data, scheduled_time, invoices}}
+pending_email_responses = {}
 
 # Initialize and register voice routes
 if klaus_voice:
@@ -467,6 +472,141 @@ async def scheduled_email_processing():
         import traceback
         print(f"[KLAUS] Email processing failed: {e}")
         traceback.print_exc()
+
+
+async def send_delayed_email_response(email_id: str):
+    """
+    Send a delayed response to an email that was queued earlier.
+    This is called by the scheduler after the random delay has passed.
+    """
+    global pending_email_responses
+
+    if email_id not in pending_email_responses:
+        print(f"[KLAUS EMAIL] Email {email_id} not found in pending queue (may have been processed already)")
+        return
+
+    pending = pending_email_responses.pop(email_id)
+    email = pending['email']
+    invoices = pending['invoices']
+
+    print(f"[KLAUS EMAIL] Sending delayed response to: {email.get('from', 'unknown')}")
+
+    try:
+        result = await process_incoming_email(email, invoices)
+        if result.get('response_sent'):
+            print(f"[KLAUS EMAIL] ✓ Response sent to {email.get('from', 'unknown')} ({result.get('detected_type', 'unknown')})")
+        elif result.get('requires_manual_review'):
+            print(f"[KLAUS EMAIL] ⚠ Email requires manual review: {email.get('subject', 'No subject')}")
+        else:
+            print(f"[KLAUS EMAIL] No response needed for: {email.get('subject', 'No subject')}")
+    except Exception as e:
+        import traceback
+        print(f"[KLAUS EMAIL] Failed to send response: {e}")
+        traceback.print_exc()
+
+
+def schedule_email_response(email: dict, invoices: list):
+    """
+    Schedule an email response with a random delay (0-12 minutes).
+    The email will be processed after the delay to seem more human.
+    """
+    global pending_email_responses
+
+    email_id = email.get('id')
+    if not email_id:
+        return
+
+    # Check if already queued or being processed
+    if email_id in pending_email_responses:
+        return
+
+    # Calculate random delay: 0-12 minutes additional
+    delay_minutes = random.uniform(0, 12)
+    scheduled_time = datetime.now() + timedelta(minutes=delay_minutes)
+
+    # Store in pending queue
+    pending_email_responses[email_id] = {
+        'email': email,
+        'invoices': invoices,
+        'scheduled_time': scheduled_time.isoformat(),
+        'delay_minutes': round(delay_minutes, 1)
+    }
+
+    # Schedule the response
+    import asyncio
+
+    def run_async_response():
+        """Wrapper to run async function from scheduler"""
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(send_delayed_email_response(email_id))
+        finally:
+            loop.close()
+
+    job_id = f"email_response_{email_id}"
+    scheduler.add_job(
+        run_async_response,
+        trigger=DateTrigger(run_date=scheduled_time),
+        id=job_id,
+        replace_existing=True
+    )
+
+    print(f"[KLAUS EMAIL] Queued response to '{email.get('from', 'unknown')}' - will send in {delay_minutes:.1f} minutes")
+
+
+async def poll_emails_for_response():
+    """
+    Poll for new unread emails every 5 minutes.
+    Queue responses with random delays to seem more human.
+    """
+    try:
+        if not klaus_gmail or not klaus_email_responder:
+            return
+
+        # Get unread emails
+        emails = klaus_gmail.get_recent_emails(
+            query="in:inbox is:unread",
+            max_results=20
+        )
+
+        if not emails:
+            print("[KLAUS EMAIL POLL] No unread emails")
+            return
+
+        # Filter out emails already in the pending queue
+        new_emails = [e for e in emails if e.get('id') not in pending_email_responses]
+
+        if not new_emails:
+            print(f"[KLAUS EMAIL POLL] {len(emails)} unread emails already queued for response")
+            return
+
+        print(f"[KLAUS EMAIL POLL] Found {len(new_emails)} new unread emails")
+
+        # Get invoices for context (cached for all emails in this batch)
+        invoices = await hubspot_client.get_invoices()
+
+        # Queue each email for delayed response
+        for email in new_emails:
+            schedule_email_response(email, invoices)
+
+        print(f"[KLAUS EMAIL POLL] Queued {len(new_emails)} emails for delayed response")
+
+    except Exception as e:
+        import traceback
+        print(f"[KLAUS EMAIL POLL] Error: {e}")
+        traceback.print_exc()
+
+
+def run_email_poll():
+    """Wrapper to run async email poll from scheduler"""
+    import asyncio
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(poll_emails_for_response())
+    finally:
+        loop.close()
 
 
 async def scheduled_full_run():
@@ -2208,6 +2348,44 @@ async def get_accounted_transactions():
     }
 
 
+@app.get("/klaus/emails/pending-responses", response_model=dict)
+async def get_pending_email_responses():
+    """Get emails queued for delayed response"""
+    pending_list = []
+    for email_id, data in pending_email_responses.items():
+        pending_list.append({
+            'email_id': email_id,
+            'from': data['email'].get('from', 'unknown'),
+            'subject': data['email'].get('subject', 'No subject'),
+            'scheduled_time': data['scheduled_time'],
+            'delay_minutes': data['delay_minutes']
+        })
+
+    # Sort by scheduled time
+    pending_list.sort(key=lambda x: x['scheduled_time'])
+
+    return {
+        "status": "success",
+        "pending_count": len(pending_list),
+        "pending_responses": pending_list,
+        "email_polling_active": klaus_gmail is not None and klaus_email_responder is not None
+    }
+
+
+@app.post("/klaus/emails/poll-now", response_model=dict)
+async def trigger_email_poll(background_tasks: BackgroundTasks):
+    """Manually trigger email polling right now"""
+    if not klaus_gmail or not klaus_email_responder:
+        raise HTTPException(status_code=503, detail="Klaus Gmail not configured")
+
+    background_tasks.add_task(run_email_poll)
+
+    return {
+        "status": "started",
+        "message": "Email poll triggered. New emails will be queued with random delays (0-12 min)."
+    }
+
+
 # ============================================================================
 # STARTUP
 # ============================================================================
@@ -2261,6 +2439,19 @@ async def startup_event():
         except Exception as e:
             print(f"⚠ Klaus Voice inbound setup failed: {e}")
 
+    # Setup email polling (check every 5 minutes, respond with 0-12 min random delay)
+    if klaus_gmail and klaus_email_responder:
+        try:
+            scheduler.add_job(
+                run_email_poll,
+                trigger=IntervalTrigger(minutes=5),
+                id='email_poll',
+                replace_existing=True
+            )
+            print("✓ Klaus Email Polling: every 5 minutes (+ 0-12 min response delay)")
+        except Exception as e:
+            print(f"⚠ Klaus Email Polling setup failed: {e}")
+
     print("\n" + "="*60)
     print("Reconciliation Agent + Klaus Collections")
     print("="*60)
@@ -2271,6 +2462,7 @@ async def startup_event():
     print(f"Klaus Voice: {'✓ Active' if klaus_voice else '✗ Disabled'}")
     print(f"Email Service: {'✓ Active' if (klaus_gmail or klaus_smtp) else '✗ Disabled'}")
     print(f"Email Responder: {'✓ Active' if klaus_email_responder else '✗ Disabled'}")
+    print(f"Email Polling: {'✓ Every 5 min' if (klaus_gmail and klaus_email_responder) else '✗ Disabled'}")
     print("="*60 + "\n")
 
 if __name__ == "__main__":
