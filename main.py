@@ -2526,10 +2526,12 @@ async def startup_event():
             print(f"✗ Failed to load schedule: {e}")
 
     # Setup Vapi inbound call handling if configured
-    if klaus_voice and os.getenv("VAPI_PHONE_NUMBER_ID"):
+    # NOTE: We no longer create/update the assistant on startup to preserve Vapi dashboard settings
+    # Just attach the existing assistant ID to the phone number
+    if klaus_voice and os.getenv("VAPI_PHONE_NUMBER_ID") and os.getenv("VAPI_ASSISTANT_ID"):
         try:
-            # Create inbound assistant for handling incoming calls
-            inbound_assistant_id = klaus_voice.create_or_update_assistant(is_inbound=True)
+            # Use existing assistant ID from environment (configured in Vapi dashboard)
+            inbound_assistant_id = os.getenv("VAPI_ASSISTANT_ID")
             if inbound_assistant_id:
                 result = klaus_voice.setup_inbound_handling(inbound_assistant_id)
                 if result.get('status') == 'success':
