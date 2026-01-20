@@ -944,20 +944,20 @@
                 </div>
                 <div class="modal-row">
                     <span class="modal-label">Subject:</span>
-                    <span class="modal-value" id="modal-subject"></span>
+                    <input type="text" class="modal-input" id="modal-subject" style="flex:1; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:14px;">
                 </div>
                 <div class="modal-row">
                     <span class="modal-label">CC:</span>
                     <span class="modal-value" id="modal-cc"></span>
                 </div>
                 <div class="modal-divider"></div>
-                <div id="modal-body" class="email-body-preview"></div>
+                <textarea id="modal-body" class="email-body-preview" style="width:100%; min-height:300px; padding:12px; border:1px solid var(--border-color); border-radius:6px; font-family:inherit; font-size:14px; line-height:1.6; resize:vertical;"></textarea>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal()">Close</button>
                 <button class="btn btn-success" id="modal-send-btn" onclick="sendFromModal()">
                     <i class="bi bi-send"></i>
-                    Approve & Send
+                    Send Email
                 </button>
             </div>
         </div>
@@ -1076,7 +1076,11 @@
                                 <button class="btn btn-sm btn-success" onclick="approveAndSend(${index}, this)">
                                     <i class="bi bi-check"></i> Approve & Send
                                 </button>
-                            ` : ''}
+                            ` : `
+                                <button class="btn btn-sm btn-success" onclick="sendSingleAutonomous(${index}, this)">
+                                    <i class="bi bi-send"></i> Send
+                                </button>
+                            `}
                         </div>
                     </div>
                 `;
@@ -1108,9 +1112,9 @@
                 }
             }
 
-            document.getElementById('modal-subject').textContent = subject;
-            document.getElementById('modal-body').textContent = body;
-            document.getElementById('modal-send-btn').style.display = isApproval ? 'inline-flex' : 'none';
+            document.getElementById('modal-subject').value = subject;
+            document.getElementById('modal-body').value = body;
+            document.getElementById('modal-send-btn').style.display = 'inline-flex';
 
             document.getElementById('emailModal').classList.add('show');
         }
@@ -1229,7 +1233,58 @@
             }
         }
 
-        async function sendEmail(email) {
+        async function sendSingleAutonomous(index, buttonElement) {
+            const email = analysisResults.autonomous_emails[index];
+            const card = document.getElementById(`email-auto-${index}`);
+
+            if (buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div> Sending...';
+            }
+
+            try {
+                const result = await sendEmail(email);
+
+                if (result.success) {
+                    if (card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.background = 'var(--accent-green-light)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
+                        if (buttonElement) {
+                            buttonElement.innerHTML = '<i class="bi bi-check-circle"></i> Sent!';
+                        }
+
+                        setTimeout(() => {
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateX(50px)';
+                            setTimeout(() => card.remove(), 300);
+                        }, 600);
+
+                        const countEl = document.getElementById('count-autonomous');
+                        const current = parseInt(countEl.textContent) || 0;
+                        countEl.textContent = Math.max(0, current - 1);
+                        document.getElementById('stat-autonomous').textContent = Math.max(0, current - 1);
+                    }
+                } else {
+                    if (card) {
+                        card.style.background = 'var(--accent-red-light)';
+                    }
+                    if (buttonElement) {
+                        buttonElement.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
+                        buttonElement.disabled = false;
+                    }
+                    alert('Failed to send: ' + result.error);
+                }
+            } catch (e) {
+                if (buttonElement) {
+                    buttonElement.innerHTML = '<i class="bi bi-x-circle"></i> Error';
+                    buttonElement.disabled = false;
+                }
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function sendEmail(email, overrideSubject = null, overrideBody = null) {
             const message = email.recommended_message || '';
             const normalizedMessage = message.replace(/\r\n/g, '\n');
 
@@ -1261,12 +1316,16 @@
                 });
             }
 
+            // Use override values if provided (from modal editing)
+            const finalSubject = overrideSubject !== null ? overrideSubject : subject;
+            const finalBody = overrideBody !== null ? overrideBody : body;
+
             const requestBody = {
                 invoice_id: invoiceId,
                 to_email: email.contact_email,
                 to_name: email.contact_name,
-                subject: subject,
-                body: body,
+                subject: finalSubject,
+                body: finalBody,
                 invoice_map: Object.keys(invoiceMap).length > 0 ? invoiceMap : null
             };
 
@@ -1301,11 +1360,71 @@
         async function sendFromModal() {
             if (!currentEmailData) return;
 
-            closeModal();
-
             const index = currentEmailData.index;
-            const btn = document.querySelector(`#email-approval-${index} .btn-success`);
-            await approveAndSend(index, btn);
+            const isApproval = currentEmailData.isApproval;
+            const email = isApproval ? analysisResults.pending_approvals[index] : analysisResults.autonomous_emails[index];
+            const cardId = isApproval ? `email-approval-${index}` : `email-auto-${index}`;
+            const card = document.getElementById(cardId);
+
+            // Get edited values from modal
+            const editedSubject = document.getElementById('modal-subject').value;
+            const editedBody = document.getElementById('modal-body').value;
+
+            // Update send button in modal to show sending state
+            const modalSendBtn = document.getElementById('modal-send-btn');
+            modalSendBtn.disabled = true;
+            modalSendBtn.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div> Sending...';
+
+            try {
+                const result = await sendEmail(email, editedSubject, editedBody);
+
+                if (result.success) {
+                    modalSendBtn.innerHTML = '<i class="bi bi-check-circle"></i> Sent!';
+
+                    if (card) {
+                        card.style.transition = 'all 0.3s ease';
+                        card.style.background = 'var(--accent-green-light)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
+
+                        // Update the send button on the card too
+                        const cardBtn = card.querySelector('.btn-success');
+                        if (cardBtn) {
+                            cardBtn.innerHTML = '<i class="bi bi-check-circle"></i> Sent!';
+                            cardBtn.disabled = true;
+                        }
+
+                        setTimeout(() => {
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateX(50px)';
+                            setTimeout(() => card.remove(), 300);
+                        }, 600);
+
+                        // Update counters
+                        const countId = isApproval ? 'count-approval' : 'count-autonomous';
+                        const statId = isApproval ? 'stat-approval' : 'stat-autonomous';
+                        const countEl = document.getElementById(countId);
+                        const current = parseInt(countEl.textContent) || 0;
+                        countEl.textContent = Math.max(0, current - 1);
+                        document.getElementById(statId).textContent = Math.max(0, current - 1);
+                    }
+
+                    setTimeout(() => closeModal(), 800);
+                } else {
+                    modalSendBtn.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
+                    modalSendBtn.disabled = false;
+                    setTimeout(() => {
+                        modalSendBtn.innerHTML = '<i class="bi bi-send"></i> Send Email';
+                    }, 2000);
+                    alert('Failed to send: ' + result.error);
+                }
+            } catch (e) {
+                modalSendBtn.innerHTML = '<i class="bi bi-x-circle"></i> Error';
+                modalSendBtn.disabled = false;
+                setTimeout(() => {
+                    modalSendBtn.innerHTML = '<i class="bi bi-send"></i> Send Email';
+                }, 2000);
+                alert('Error: ' + e.message);
+            }
         }
 
         async function loadHistory() {
