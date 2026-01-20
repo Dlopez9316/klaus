@@ -1,1059 +1,983 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Reconciliation Agent Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconciliation Agent Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --bg-elevated: rgba(255, 255, 255, 0.9);
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --text-tertiary: #a1a1a6;
+            --accent-blue: #007aff;
+            --accent-blue-light: rgba(0, 122, 255, 0.1);
+            --accent-green: #34c759;
+            --accent-green-light: rgba(52, 199, 89, 0.1);
+            --accent-orange: #ff9500;
+            --accent-orange-light: rgba(255, 149, 0, 0.1);
+            --accent-red: #ff3b30;
+            --accent-red-light: rgba(255, 59, 48, 0.1);
+            --accent-purple: #af52de;
+            --accent-purple-light: rgba(175, 82, 222, 0.1);
+            --accent-indigo: #5856d6;
+            --accent-indigo-light: rgba(88, 86, 214, 0.1);
+            --accent-teal: #5ac8fa;
+            --accent-teal-light: rgba(90, 200, 250, 0.1);
+            --border-light: rgba(0, 0, 0, 0.06);
+            --border-medium: rgba(0, 0, 0, 0.1);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 18px;
+            --radius-xl: 22px;
+            --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-system);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.47059;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+            padding: 24px;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at 30% 10%, rgba(0, 122, 255, 0.04) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 90%, rgba(88, 86, 214, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
 
-  <!-- Bootstrap core -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Inter font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        /* Header */
+        .header {
+            background: var(--bg-elevated);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+            animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        @keyframes fadeDown { to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-indigo) 100%);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+        .logo-icon i { font-size: 22px; color: white; }
+        .header-title h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; margin-bottom: 2px; }
+        .header-title p { font-size: 13px; color: var(--text-secondary); }
+        .header-actions { display: flex; gap: 12px; }
 
-  <style>
-    :root{
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --card-2: #f1f5f9;
-      --text: #334155;
-      --text-strong: #1e293b;
-      --muted: #64748b;
-      --primary: #6366f1;
-      --primary-strong: #4f46e5;
-      --primary-light: #eef2ff;
-      --warning: #f59e0b;
-      --warning-light: #fef3c7;
-      --success: #10b981;
-      --success-light: #d1fae5;
-      --danger: #ef4444;
-      --danger-light: #fee2e2;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
-      --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
-      --radius: 16px;
-      --border: #e2e8f0;
-    }
-    *{font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;}
-    body{
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 18px 18px 48px;
-    }
-    .app-nav{
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-    .brand{font-weight: 700; letter-spacing:.3px; color: var(--text-strong);}
-    .kpi-card{
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      height: 100%;
-    }
-    .kpi-card .icon{
-      width: 44px;height: 44px;border-radius: 12px;
-      display:flex;align-items:center;justify-content:center;
-      background: var(--primary-light);color: var(--primary);
-    }
-    .kpi-value{font-size: 2.4rem; font-weight: 700; color: var(--text-strong);}
-    .card{
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-    }
-    .card-plain{background: var(--card-2); border: 1px solid var(--border);}
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 20px; border-radius: var(--radius-md);
+            font-size: 14px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none; font-family: inherit;
+        }
+        .btn-secondary {
+            background: var(--bg-secondary); color: var(--text-primary);
+            border: 1px solid var(--border-medium); box-shadow: var(--shadow-sm);
+        }
+        .btn-secondary:hover { background: var(--bg-primary); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+        .btn-primary {
+            background: var(--accent-blue); color: white;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+        .btn-primary:hover { background: #0066d6; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-success { background: var(--accent-green); color: white; box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3); }
+        .btn-success:hover { background: #2db24d; transform: translateY(-1px); }
+        .btn-danger { background: var(--accent-red); color: white; box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3); }
+        .btn-danger:hover { background: #e6342b; transform: translateY(-1px); }
+        .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: var(--radius-sm); }
+        .btn i { font-size: 16px; }
 
-    /* Tabs */
-    .nav-tabs{
-      border: none; gap: .5rem; margin-top: .25rem;
-    }
-    .nav-tabs .nav-link{
-      color: var(--muted);
-      border: 1px solid var(--border) !important;
-      border-radius: 999px !important;
-      background: var(--card);
-      padding: .6rem 1.1rem;
-      display: inline-flex; align-items: center; gap: .5rem;
-      transition: all 0.2s ease;
-    }
-    .nav-tabs .nav-link:hover{
-      background: var(--card-2);
-      color: var(--text-strong);
-    }
-    .nav-tabs .nav-link.active{
-      color: var(--primary);
-      background: var(--primary-light);
-      border-color: var(--primary) !important;
-      font-weight: 500;
-    }
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            position: relative; overflow: hidden;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.15s; }
+        .stat-card:nth-child(3) { animation-delay: 0.2s; }
+        .stat-card:nth-child(4) { animation-delay: 0.25s; }
+        .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .stat-card.blue::before { background: var(--accent-blue); }
+        .stat-card.teal::before { background: var(--accent-teal); }
+        .stat-card.purple::before { background: var(--accent-purple); }
+        .stat-card.green::before { background: var(--accent-green); }
+        .stat-icon {
+            width: 40px; height: 40px; border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+        }
+        .stat-card.blue .stat-icon { background: var(--accent-blue-light); color: var(--accent-blue); }
+        .stat-card.teal .stat-icon { background: var(--accent-teal-light); color: var(--accent-teal); }
+        .stat-card.purple .stat-icon { background: var(--accent-purple-light); color: var(--accent-purple); }
+        .stat-card.green .stat-icon { background: var(--accent-green-light); color: var(--accent-green); }
+        .stat-icon i { font-size: 18px; }
+        .stat-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+        .stat-value { font-size: 32px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; }
+        .stat-value-sm { font-size: 18px; font-weight: 500; }
 
-    /* Buttons */
-    .btn-primary{
-      background: var(--primary);
-      border: none;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-      border-radius: 12px;
-      transition: all 0.2s ease;
-    }
-    .btn-primary:hover{
-      background: var(--primary-strong);
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-      transform: translateY(-1px);
-    }
-    .btn-success{
-      background: var(--success);
-      border: none;
-      border-radius: 10px;
-    }
-    .btn-danger{
-      background: var(--danger);
-      border: none;
-      border-radius: 10px;
-    }
-    .btn-reconcile{font-size: 1.05rem; padding:.9rem 1.4rem;}
-    .confidence-badge{
-      font-size: .85rem;
-      padding: .4rem .75rem;
-      border-radius: 999px;
-      font-weight: 600;
-    }
+        /* Tabs */
+        .tabs-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+            opacity: 0; transform: translateY(10px);
+        }
+        .tabs-header {
+            display: flex; gap: 4px; padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
+            overflow-x: auto; flex-wrap: wrap;
+        }
+        .tab-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 16px; border-radius: 999px;
+            font-size: 13px; font-weight: 500;
+            background: transparent; border: 1px solid var(--border-light);
+            color: var(--text-secondary); cursor: pointer;
+            transition: all 0.2s ease; white-space: nowrap;
+        }
+        .tab-btn:hover { background: var(--bg-primary); color: var(--text-primary); }
+        .tab-btn.active {
+            background: var(--accent-blue-light);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+        .tab-btn i { font-size: 14px; }
+        .tabs-content { padding: 24px; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; animation: fadeUp 0.3s ease; }
 
-    /* List cards */
-    .match-card,.suggestion-card{
-      border-left: 4px solid var(--primary);
-      background: var(--card);
-      border-radius: 14px;
-      border: 1px solid var(--border);
-      margin-bottom: 14px;
-      transition: all 0.2s ease;
-    }
-    .match-card:hover{
-      box-shadow: var(--shadow-lg);
-      transform: translateY(-2px);
-    }
-    .suggestion-card{border-left-color: var(--warning);}
+        /* Cards */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            margin-bottom: 12px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .card-body { padding: 20px; }
 
-    .divider{
-      height:1px;
-      background: var(--border);
-      margin: .75rem 0 1rem;
-    }
-    .list-row{
-      display:flex;justify-content:space-between;align-items:center;
-      padding:.5rem .25rem; border-bottom:1px dashed var(--border);
-      color: var(--text-strong);
-    }
-    .list-row:last-child{border-bottom:none;}
+        /* Match Card */
+        .match-card {
+            border-left: 4px solid var(--accent-blue);
+            background: var(--bg-secondary);
+        }
+        .match-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .match-amount { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+        .match-dates { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .date-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border-radius: 8px;
+            font-size: 12px; font-weight: 500;
+            background: var(--accent-blue-light); color: var(--accent-blue);
+        }
+        .match-description {
+            font-size: 13px; color: var(--text-secondary);
+            margin-bottom: 12px; cursor: help;
+            position: relative;
+        }
+        .tooltip-content {
+            visibility: hidden; opacity: 0;
+            position: absolute; bottom: 125%; left: 0;
+            width: 400px; max-width: 90vw;
+            background: var(--text-primary); color: white;
+            padding: 12px 16px; border-radius: var(--radius-sm);
+            font-size: 12px; white-space: pre-wrap;
+            box-shadow: var(--shadow-lg);
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+        .match-description:hover .tooltip-content { visibility: visible; opacity: 1; }
+        .match-divider { height: 1px; background: var(--border-light); margin: 16px 0; }
+        .match-invoice { margin-bottom: 16px; }
+        .match-invoice-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .match-invoice-details { font-size: 12px; color: var(--text-secondary); }
+        .match-actions { display: flex; gap: 8px; }
+        .confidence-badge {
+            padding: 6px 12px; border-radius: 999px;
+            font-size: 12px; font-weight: 600;
+        }
+        .confidence-badge.high { background: var(--accent-green-light); color: var(--accent-green); }
+        .confidence-badge.medium { background: var(--accent-orange-light); color: var(--accent-orange); }
+        .confidence-badge.low { background: var(--accent-red-light); color: var(--accent-red); }
 
-    /* Text colors for light theme */
-    .text-muted,
-    .text-secondary,
-    .text-body-secondary,
-    small,
-    .form-text {
-      color: var(--muted) !important;
-    }
+        /* Suggestion Card */
+        .suggestion-card { border-left: 4px solid var(--accent-orange); }
 
-    .form-label,
-    label {
-      color: var(--text-strong) !important;
-      font-weight: 500;
-    }
+        /* Validation Card */
+        .validation-card { margin-bottom: 10px; }
+        .validation-card.balanced { border-left: 4px solid var(--accent-green); }
+        .validation-card.short { border-left: 4px solid var(--accent-orange); }
+        .validation-card.over { border-left: 4px solid var(--accent-blue); }
 
-    .card strong,
-    .card-body strong,
-    .card h6,
-    strong {
-      color: var(--text-strong) !important;
-    }
+        /* Section Header */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .section-title { font-size: 17px; font-weight: 600; }
+        .section-desc { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
 
-    .card-body,
-    .card-body div {
-      color: var(--text);
-    }
+        /* Form */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .form-input, .form-select {
+            width: 100%; padding: 12px 16px;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-sm);
+            font-size: 14px; font-family: inherit;
+            background: var(--bg-secondary);
+            transition: all 0.2s ease;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px var(--accent-blue-light);
+        }
+        .form-hint { font-size: 12px; color: var(--text-secondary); margin-top: 6px; }
 
-    /* Muted containers */
-    .muted-box{
-      background: var(--card-2);
-      border: 1px dashed var(--border);
-      border-radius: 12px;
-      padding: .75rem 1rem;
-    }
+        /* Grid Layout */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 
-    /* Inputs */
-    .form-control,
-    .form-select{
-      color: var(--text-strong);
-      background-color: var(--card);
-      border-color: var(--border);
-      border-radius: 10px;
-    }
-    .form-control:focus,
-    .form-select:focus{
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px var(--primary-light);
-    }
-    .form-control::placeholder{
-      color: var(--muted);
-    }
+        /* Status Cards */
+        .status-card {
+            padding: 16px; border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+        }
+        .status-card.success { background: var(--accent-green-light); border-color: rgba(52, 199, 89, 0.2); }
+        .status-card.info { background: var(--accent-blue-light); border-color: rgba(0, 122, 255, 0.2); }
+        .status-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+        .status-card p { font-size: 13px; color: var(--text-primary); margin: 0; }
 
-    /* Card headings */
-    .card-plain h5, .card-plain h6 { color: var(--text-strong); }
+        /* Empty State */
+        .empty-state {
+            text-align: center; padding: 48px 24px;
+            background: var(--bg-primary); border-radius: var(--radius-md);
+            color: var(--text-secondary);
+        }
+        .empty-state i { font-size: 32px; margin-bottom: 12px; opacity: 0.5; }
+        .empty-state p { font-size: 14px; }
 
-    .footer{
-      color: var(--muted);
-      text-align:center;
-      font-size:.85rem;
-      margin-top: 28px;
-      opacity:.9;
-    }
-    
-    /* Tooltip for transaction descriptions */
-    .description-text {
-      cursor: help;
-      position: relative;
-      display: inline-block;
-      max-width: 100%;
-    }
+        /* Alert */
+        .alert {
+            padding: 16px 20px; border-radius: var(--radius-md);
+            font-size: 13px; margin-bottom: 16px;
+        }
+        .alert-info { background: var(--accent-blue-light); color: var(--accent-blue); }
+        .alert-success { background: var(--accent-green-light); color: var(--accent-green); }
+        .alert-danger { background: var(--accent-red-light); color: var(--accent-red); }
+        .alert-warning { background: var(--accent-orange-light); color: var(--accent-orange); }
 
-    .description-text .tooltip-content {
-      visibility: hidden;
-      width: 400px;
-      max-width: 90vw;
-      background-color: var(--text-strong);
-      color: #fff;
-      text-align: left;
-      border-radius: 12px;
-      padding: 12px 16px;
-      position: absolute;
-      z-index: 1000;
-      bottom: 125%;
-      left: 0;
-      margin-left: 0;
-      opacity: 0;
-      transition: opacity 0.3s;
-      box-shadow: var(--shadow-lg);
-      font-size: 0.9rem;
-      word-wrap: break-word;
-      white-space: pre-wrap;
-    }
+        /* Spinner */
+        .spinner {
+            width: 16px; height: 16px;
+            border: 2px solid var(--accent-blue-light);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-    .description-text .tooltip-content::after {
-      content: "";
-      position: absolute;
-      top: 100%;
-      left: 20px;
-      margin-left: -5px;
-      border-width: 5px;
-      border-style: solid;
-      border-color: var(--text-strong) transparent transparent transparent;
-    }
+        /* List Row */
+        .list-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid var(--border-light);
+        }
+        .list-row:last-child { border-bottom: none; }
 
-    .description-text:hover .tooltip-content {
-      visibility: visible;
-      opacity: 1;
-    }
+        /* Summary Grid */
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .summary-card {
+            text-align: center; padding: 20px;
+            border-radius: var(--radius-md); border: 1px solid var(--border-light);
+        }
+        .summary-card i { font-size: 28px; margin-bottom: 8px; }
+        .summary-card .value { font-size: 28px; font-weight: 600; }
+        .summary-card .label { font-size: 12px; color: var(--text-secondary); }
+        .summary-card.green { background: var(--accent-green-light); }
+        .summary-card.green i { color: var(--accent-green); }
+        .summary-card.orange { background: var(--accent-orange-light); }
+        .summary-card.orange i { color: var(--accent-orange); }
+        .summary-card.blue { background: var(--accent-blue-light); }
+        .summary-card.blue i { color: var(--accent-blue); }
 
-    .date-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      background: var(--primary-light);
-      border: 1px solid rgba(99, 102, 241, 0.2);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      color: var(--primary);
-      margin-right: 8px;
-      font-weight: 500;
-    }
-  </style>
+        /* Badge */
+        .badge {
+            display: inline-flex; align-items: center;
+            padding: 4px 10px; border-radius: 6px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-success { background: var(--accent-green); color: white; }
+        .badge-warning { background: var(--accent-orange); color: white; }
+        .badge-info { background: var(--accent-blue); color: white; }
+
+        /* Responsive */
+        @media (max-width: 1200px) { .stats-grid, .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 900px) {
+            .header { flex-direction: column; gap: 16px; text-align: center; }
+            .header-left { flex-direction: column; }
+            .header-actions { width: 100%; justify-content: center; }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 600px) {
+            .stats-grid, .summary-grid { grid-template-columns: 1fr; }
+            .tabs-header { gap: 8px; }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <!-- Top header -->
-    <div class="app-nav d-flex align-items-center justify-content-between p-3 mb-4">
-      <div class="d-flex align-items-center gap-3">
-        <span class="icon d-inline-flex align-items-center justify-content-center" style="width:42px;height:42px;border-radius:12px;background:rgba(122,162,255,.18);color:var(--primary);box-shadow:inset 0 0 0 1px rgba(122,162,255,.35);">
-          <i class="bi bi-diagram-3"></i>
-        </span>
-        <div>
-          <div class="brand h4 mb-0">Reconciliation Agent Dashboard</div>
-          <div class="small" style="color: var(--text-strong)">Faster closeouts • Cleaner books • Fewer headaches</div>
-        </div>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <a href="/klaus" class="btn" style="border-radius: 14px; border: 1px solid rgba(122,162,255,.5); color: var(--primary); padding: .9rem 1.4rem;">
-          <i class="bi bi-robot me-1"></i> Klaus Dashboard
-        </a>
-        <button class="btn btn-primary btn-reconcile" onclick="runReconciliation()">
-          <i class="bi bi-lightning-charge me-1"></i> Run Reconciliation Now
-        </button>
-      </div>
-    </div>
-
-    <!-- KPI row -->
-    <div class="row g-3 mb-4">
-      <div class="col-md-3">
-        <div class="kpi-card p-3">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="icon"><i class="bi bi-link-45deg"></i></div>
-            <span class="badge bg-primary-subtle text-primary">AI Memory</span>
-          </div>
-          <div class="mt-3">
-            <div class="small" style="color: var(--text-strong)">Learned Associations</div>
-            <div class="kpi-value" id="associations-count">0</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="kpi-card p-3">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="icon"><i class="bi bi-journal-check"></i></div>
-            <span class="badge bg-info-subtle text-info">Queue</span>
-          </div>
-          <div class="mt-3">
-            <div class="small" style="color: var(--text-strong)">Pending Matches</div>
-            <div class="kpi-value" id="matches-count">0</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="kpi-card p-3">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="icon"><i class="bi bi-clock-history"></i></div>
-            <span class="badge bg-secondary-subtle text-secondary">Runtime</span>
-          </div>
-          <div class="mt-3">
-            <div class="small" style="color: var(--text-strong)">Last Run</div>
-            <div class="h5 mb-0" id="last-run">Never</div>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="kpi-card p-3">
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="icon"><i class="bi bi-calendar2-check"></i></div>
-            <span class="badge bg-success-subtle text-success">Automation</span>
-          </div>
-          <div class="mt-3">
-            <div class="small" style="color: var(--text-strong)">Schedule</div>
-            <div class="h5 mb-0" id="schedule-status">Not Set</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs" id="myTab" role="tablist">
-      <li class="nav-item" role="presentation">
-        <a class="nav-link active" id="matches-tab" data-bs-toggle="tab" href="#matches" role="tab" aria-controls="matches" aria-selected="true">
-          <i class="bi bi-list-check"></i> Pending Matches
-        </a>
-      </li>
-      <li class="nav-item" role="presentation">
-        <a class="nav-link" id="validation-tab" data-bs-toggle="tab" href="#validation" role="tab" aria-controls="validation" aria-selected="false">
-          <i class="bi bi-shield-check"></i> Payment Validation
-        </a>
-      </li>
-      <li class="nav-item" role="presentation">
-        <a class="nav-link" id="suggestions-tab" data-bs-toggle="tab" href="#suggestions" role="tab" aria-controls="suggestions" aria-selected="false">
-          <i class="bi bi-stars"></i> AI Suggestions
-        </a>
-      </li>
-      <li class="nav-item" role="presentation">
-        <a class="nav-link" id="associations-tab" data-bs-toggle="tab" href="#associations" role="tab" aria-controls="associations" aria-selected="false">
-          <i class="bi bi-person-gear"></i> Teach Associations
-        </a>
-      </li>
-      <li class="nav-item" role="presentation">
-        <a class="nav-link" id="notifications-tab" data-bs-toggle="tab" href="#notifications" role="tab" aria-controls="notifications" aria-selected="false">
-          <i class="bi bi-bell"></i> Notifications
-        </a>
-      </li>
-      <li class="nav-item" role="presentation">
-        <a class="nav-link" id="schedule-tab" data-bs-toggle="tab" href="#schedule" role="tab" aria-controls="schedule" aria-selected="false">
-          <i class="bi bi-calendar-week"></i> Schedule
-        </a>
-      </li>
-    </ul>
-
-    <div class="tab-content mt-3" id="myTabContent">
-      <!-- Matches -->
-      <div class="tab-pane fade show active" id="matches" role="tabpanel" aria-labelledby="matches-tab">
-        <div class="card card-plain">
-          <div class="card-body">
-            <div id="matches-list" class="muted-box">
-              <i class="bi bi-info-circle me-2"></i>
-              <span class="text-muted">Run reconciliation to see matches...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payment Validation -->
-      <div class="tab-pane fade" id="validation" role="tabpanel" aria-labelledby="validation-tab">
-        <div class="card card-plain">
-          <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <div>
-                <h5 class="mb-1">Company Payment History Validation</h5>
-                <p class="mb-0" style="color: var(--text-strong)">Verify that payments match paid invoices for each company (automatically run during reconciliation)</p>
-              </div>
-              <button class="btn btn-primary" onclick="loadValidationReport()">
-                <i class="bi bi-shield-check me-1"></i> Run Validation Report
-              </button>
-            </div>
-            <div class="divider"></div>
-            
-            <!-- Summary Cards -->
-            <div class="row g-3 mb-3" id="validation-summary" style="display: none;">
-              <div class="col-md-3">
-                <div class="card" style="background: rgba(102,224,163,0.1); border-color: rgba(102,224,163,0.3);">
-                  <div class="card-body text-center">
-                    <i class="bi bi-check-circle" style="font-size: 2rem; color: var(--success);"></i>
-                    <div class="kpi-value" id="balanced-count">0</div>
-                    <div class="small" style="color: var(--text-strong)">Balanced</div>
-                  </div>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-icon"><i class="bi bi-diagram-3"></i></div>
+                <div class="header-title">
+                    <h1>Reconciliation Agent</h1>
+                    <p>Faster closeouts - Cleaner books - Fewer headaches</p>
                 </div>
-              </div>
-              <div class="col-md-3">
-                <div class="card" style="background: rgba(255,209,102,0.1); border-color: rgba(255,209,102,0.3);">
-                  <div class="card-body text-center">
-                    <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: var(--warning);"></i>
-                    <div class="kpi-value" id="short-count">0</div>
-                    <div class="small" style="color: var(--text-strong)">Missing Payments</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="card" style="background: rgba(122,162,255,0.1); border-color: rgba(122,162,255,0.3);">
-                  <div class="card-body text-center">
-                    <i class="bi bi-info-circle" style="font-size: 2rem; color: var(--primary);"></i>
-                    <div class="kpi-value" id="over-count">0</div>
-                    <div class="small" style="color: var(--text-strong)">Extra Payments</div>
-                  </div>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <div class="card" style="background: rgba(122,162,255,0.1); border-color: rgba(122,162,255,0.3);">
-                  <div class="card-body text-center">
-                    <i class="bi bi-building" style="font-size: 2rem; color: var(--primary);"></i>
-                    <div class="kpi-value" id="total-companies">0</div>
-                    <div class="small" style="color: var(--text-strong)">Total Companies</div>
-                  </div>
-                </div>
-              </div>
             </div>
-            
-            <div id="validation-list" class="muted-box">
-              <i class="bi bi-info-circle me-2"></i>
-              <span class="text-muted">Click "Run Validation Report" to check payment history...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Suggestions -->
-      <div class="tab-pane fade" id="suggestions" role="tabpanel" aria-labelledby="suggestions-tab">
-        <div class="card card-plain">
-          <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-              <div>
-                <h5 class="mb-1">AI-Suggested Associations from Historical Data</h5>
-                <p class="mb-0" style="color: var(--text-strong)">The AI analyzes your paid invoices and bank transactions to suggest associations.</p>
-              </div>
-              <button class="btn btn-primary" onclick="loadSuggestions()">
-                <i class="bi bi-cpu me-1"></i> Analyze History & Generate Suggestions
-              </button>
-            </div>
-            <div class="divider"></div>
-            <div id="suggestions-list" class="muted-box">
-              <i class="bi bi-magic me-2"></i>
-              <span class="text-muted">Click the button above to generate suggestions...</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Teach Associations -->
-      <div class="tab-pane fade" id="associations" role="tabpanel" aria-labelledby="associations-tab">
-        <div class="card card-plain">
-          <div class="card-body">
-            <div class="row g-4">
-              <div class="col-md-5">
-                <h5 class="mb-3">Teach New Association</h5>
-                <form id="teach-form">
-                  <div class="mb-3">
-                    <label class="form-label">Transaction Keyword</label>
-                    <input type="text" class="form-control" id="transaction-name" required placeholder="e.g., HarborGroup">
-                    <div class="form-text">Enter a keyword that appears in transaction descriptions</div>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Company Name</label>
-                    <input type="text" class="form-control" id="company-name" required placeholder="e.g., HG Sealofts, LLC">
-                  </div>
-                  <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check2-circle me-1"></i> Teach Association
-                  </button>
-                </form>
-              </div>
-              <div class="col-md-7">
-                <h5 class="mb-3">Learned Associations</h5>
-                <div id="associations-list" class="muted-box"><span class="text-muted">No associations yet...</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Notifications -->
-      <div class="tab-pane fade" id="notifications" role="tabpanel" aria-labelledby="notifications-tab">
-        <div class="card card-plain">
-          <div class="card-body">
-            <h5 class="mb-2">Notification Settings</h5>
-            <p style="color: var(--text-strong)">Get reports via email or WhatsApp when reconciliation runs.</p>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <div class="p-3 rounded-3" style="background:rgba(102,224,163,.08); border:1px solid rgba(102,224,163,.25)">
-                  <h6 class="mb-1">📧 Email Status</h6>
-                  <p id="email-status" class="mb-0">Checking...</p>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="p-3 rounded-3" style="background:rgba(122,162,255,.08); border:1px solid rgba(122,162,255,.25)">
-                  <h6 class="mb-1">💬 WhatsApp Status</h6>
-                  <p id="whatsapp-status" class="mb-0">Checking...</p>
-                </div>
-              </div>
-            </div>
-            <div class="divider"></div>
-            <h6>Send Test Notification</h6>
-            <p style="color: var(--text-strong)">Verify your notification settings are working.</p>
-            <div class="btn-group mb-3 flex-wrap" role="group">
-              <button class="btn btn-primary" onclick="sendTestNotification('email')">📧 Test Email</button>
-              <button class="btn btn-success" onclick="sendTestNotification('whatsapp')">💬 Test WhatsApp</button>
-              <button class="btn btn-info" onclick="sendTestNotification('both')">🔔 Test Both</button>
-            </div>
-            <div id="notification-result"></div>
-            <div class="divider"></div>
-            <div class="alert alert-info mb-0">
-              <strong>Setup Instructions:</strong>
-              <ul class="mb-0">
-                <li><strong>Email:</strong> Configure SMTP settings in your .env file</li>
-                <li><strong>WhatsApp:</strong> Set up Twilio account and configure credentials in .env</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Schedule -->
-      <div class="tab-pane fade" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
-        <div class="card card-plain">
-          <div class="card-body">
-            <h5 class="mb-2">Schedule Automatic Reconciliation</h5>
-            <p style="color: var(--text-strong)">Automated reconciliation will send notifications to your configured channels.</p>
-            <form id="schedule-form" class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Frequency</label>
-                <select class="form-select" id="frequency">
-                  <option value="none">Disabled</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly (Monday)</option>
-                  <option value="monthly">Monthly (1st of month)</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Time</label>
-                <input type="time" class="form-control" id="schedule-time" value="09:00">
-              </div>
-              <div class="col-12">
-                <button type="submit" class="btn btn-primary">
-                  <i class="bi bi-save me-1"></i> Save Schedule
+            <div class="header-actions">
+                <a href="/klaus" class="btn btn-secondary">
+                    <i class="bi bi-robot"></i> Klaus Dashboard
+                </a>
+                <button class="btn btn-primary" onclick="runReconciliation()" id="btn-reconcile">
+                    <i class="bi bi-lightning-charge-fill"></i> Run Reconciliation
                 </button>
-              </div>
-            </form>
-          </div>
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card blue">
+                <div class="stat-icon"><i class="bi bi-link-45deg"></i></div>
+                <div class="stat-label">Learned Associations</div>
+                <div class="stat-value" id="associations-count">0</div>
+            </div>
+            <div class="stat-card teal">
+                <div class="stat-icon"><i class="bi bi-journal-check"></i></div>
+                <div class="stat-label">Pending Matches</div>
+                <div class="stat-value" id="matches-count">0</div>
+            </div>
+            <div class="stat-card purple">
+                <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+                <div class="stat-label">Last Run</div>
+                <div class="stat-value stat-value-sm" id="last-run">Never</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-icon"><i class="bi bi-calendar2-check"></i></div>
+                <div class="stat-label">Schedule</div>
+                <div class="stat-value stat-value-sm" id="schedule-status">Not Set</div>
+            </div>
         </div>
-      </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-btn active" data-tab="matches"><i class="bi bi-list-check"></i> Pending Matches</button>
+                <button class="tab-btn" data-tab="validation"><i class="bi bi-shield-check"></i> Payment Validation</button>
+                <button class="tab-btn" data-tab="suggestions"><i class="bi bi-stars"></i> AI Suggestions</button>
+                <button class="tab-btn" data-tab="associations"><i class="bi bi-person-gear"></i> Teach Associations</button>
+                <button class="tab-btn" data-tab="notifications"><i class="bi bi-bell"></i> Notifications</button>
+                <button class="tab-btn" data-tab="schedule"><i class="bi bi-calendar-week"></i> Schedule</button>
+            </div>
+            <div class="tabs-content">
+                <!-- Matches Tab -->
+                <div class="tab-pane active" id="tab-matches">
+                    <div id="matches-list">
+                        <div class="empty-state">
+                            <i class="bi bi-search"></i>
+                            <p>Run reconciliation to see matches...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Validation Tab -->
+                <div class="tab-pane" id="tab-validation">
+                    <div class="section-header">
+                        <div>
+                            <div class="section-title">Company Payment History Validation</div>
+                            <div class="section-desc">Verify that payments match paid invoices for each company</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadValidationReport()">
+                            <i class="bi bi-shield-check"></i> Run Validation Report
+                        </button>
+                    </div>
+                    <div class="summary-grid" id="validation-summary" style="display: none;">
+                        <div class="summary-card green">
+                            <i class="bi bi-check-circle"></i>
+                            <div class="value" id="balanced-count">0</div>
+                            <div class="label">Balanced</div>
+                        </div>
+                        <div class="summary-card orange">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <div class="value" id="short-count">0</div>
+                            <div class="label">Missing Payments</div>
+                        </div>
+                        <div class="summary-card blue">
+                            <i class="bi bi-info-circle"></i>
+                            <div class="value" id="over-count">0</div>
+                            <div class="label">Extra Payments</div>
+                        </div>
+                        <div class="summary-card blue">
+                            <i class="bi bi-building"></i>
+                            <div class="value" id="total-companies">0</div>
+                            <div class="label">Total Companies</div>
+                        </div>
+                    </div>
+                    <div id="validation-list">
+                        <div class="empty-state">
+                            <i class="bi bi-shield"></i>
+                            <p>Click "Run Validation Report" to check payment history...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Suggestions Tab -->
+                <div class="tab-pane" id="tab-suggestions">
+                    <div class="section-header">
+                        <div>
+                            <div class="section-title">AI-Suggested Associations</div>
+                            <div class="section-desc">The AI analyzes your paid invoices and bank transactions to suggest associations</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadSuggestions()">
+                            <i class="bi bi-cpu"></i> Analyze History
+                        </button>
+                    </div>
+                    <div id="suggestions-list">
+                        <div class="empty-state">
+                            <i class="bi bi-magic"></i>
+                            <p>Click the button above to generate suggestions...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Associations Tab -->
+                <div class="tab-pane" id="tab-associations">
+                    <div class="grid-2">
+                        <div>
+                            <div class="section-title" style="margin-bottom: 20px;">Teach New Association</div>
+                            <form id="teach-form">
+                                <div class="form-group">
+                                    <label class="form-label">Transaction Keyword</label>
+                                    <input type="text" class="form-input" id="transaction-name" required placeholder="e.g., HarborGroup">
+                                    <div class="form-hint">Enter a keyword that appears in transaction descriptions</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Company Name</label>
+                                    <input type="text" class="form-input" id="company-name" required placeholder="e.g., HG Sealofts, LLC">
+                                </div>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check2-circle"></i> Teach Association
+                                </button>
+                            </form>
+                        </div>
+                        <div>
+                            <div class="section-title" style="margin-bottom: 20px;">Learned Associations</div>
+                            <div id="associations-list">
+                                <div class="empty-state"><p>No associations yet...</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Tab -->
+                <div class="tab-pane" id="tab-notifications">
+                    <div class="section-title" style="margin-bottom: 8px;">Notification Settings</div>
+                    <div class="section-desc" style="margin-bottom: 20px;">Get reports via email or WhatsApp when reconciliation runs</div>
+                    <div class="grid-2" style="margin-bottom: 24px;">
+                        <div class="status-card success">
+                            <h4>Email Status</h4>
+                            <p id="email-status">Checking...</p>
+                        </div>
+                        <div class="status-card info">
+                            <h4>WhatsApp Status</h4>
+                            <p id="whatsapp-status">Checking...</p>
+                        </div>
+                    </div>
+                    <div class="section-title" style="margin-bottom: 12px;">Send Test Notification</div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="sendTestNotification('email')">
+                            <i class="bi bi-envelope"></i> Test Email
+                        </button>
+                        <button class="btn btn-success" onclick="sendTestNotification('whatsapp')">
+                            <i class="bi bi-whatsapp"></i> Test WhatsApp
+                        </button>
+                        <button class="btn btn-secondary" onclick="sendTestNotification('both')">
+                            <i class="bi bi-bell"></i> Test Both
+                        </button>
+                    </div>
+                    <div id="notification-result"></div>
+                    <div class="alert alert-info">
+                        <strong>Setup Instructions:</strong><br>
+                        <strong>Email:</strong> Configure SMTP settings in your .env file<br>
+                        <strong>WhatsApp:</strong> Set up Twilio account and configure credentials in .env
+                    </div>
+                </div>
+
+                <!-- Schedule Tab -->
+                <div class="tab-pane" id="tab-schedule">
+                    <div class="section-title" style="margin-bottom: 8px;">Schedule Automatic Reconciliation</div>
+                    <div class="section-desc" style="margin-bottom: 20px;">Automated reconciliation will send notifications to your configured channels</div>
+                    <form id="schedule-form" style="max-width: 500px;">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">Frequency</label>
+                                <select class="form-select" id="frequency">
+                                    <option value="none">Disabled</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly (Monday)</option>
+                                    <option value="monthly">Monthly (1st)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Time</label>
+                                <input type="time" class="form-input" id="schedule-time" value="09:00">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Save Schedule
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="footer">Built for speed • Designed for clarity • Ready for scale</div>
-  </div>
-
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- Original functionality preserved -->
-  <script>
-    // INIT
-    loadAssociations();
-    loadSchedule();
-    checkNotificationStatus();
-
-    document.getElementById('teach-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const response = await fetch('/teach', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          transaction_name: document.getElementById('transaction-name').value,
-          company_name: document.getElementById('company-name').value
-        })
-      });
-      const result = await response.json();
-      alert(result.message);
-      document.getElementById('teach-form').reset();
-      loadAssociations();
-    });
-
-    document.getElementById('schedule-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const response = await fetch('/schedule', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          frequency: document.getElementById('frequency').value,
-          time: document.getElementById('schedule-time').value
-        })
-      });
-      const result = await response.json();
-      alert(result.message);
-      loadSchedule();
-    });
-
-    async function runReconciliation() {
-      const btn = document.querySelector('.btn-reconcile');
-      const container = document.getElementById('matches-list');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Running...';
-      container.innerHTML = '<div class="text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Running reconciliation...</div>';
-      try {
-        // Calculate date range: 90 days back to today
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 90);
-
-        const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
-
-        console.log('Calling /reconcile with dates:', startDateStr, 'to', endDateStr);
-        const response = await fetch(`/reconcile?start_date=${startDateStr}&end_date=${endDateStr}&auto_approve_threshold=50`);
-
-        // Check if response is OK
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMsg = errorData.detail || `Server error: ${response.status} ${response.statusText}`;
-          container.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${errorMsg}</div>`;
-          console.error('Reconciliation failed:', errorMsg);
-          return;
-        }
-
-        const result = await response.json();
-        console.log('Reconciliation result:', result);
-
-        if (result.status === 'success') {
-          displayMatches(result.matches);
-          document.getElementById('matches-count').innerText = result.matches_found || 0;
-          document.getElementById('last-run').innerText = new Date().toLocaleString();
-
-          // Show summary if no matches
-          if (result.matches_found === 0) {
-            container.innerHTML = `<div class="alert alert-info">Reconciliation complete. Analyzed ${result.transactions_analyzed || 0} transactions and ${result.invoices_analyzed || 0} invoices. No matches found.</div>`;
-          }
-        } else {
-          container.innerHTML = `<div class="alert alert-warning">Unexpected response: ${JSON.stringify(result)}</div>`;
-        }
-      } catch(e) {
-        console.error('Reconciliation error:', e);
-        container.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${e.message}</div>`;
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-lightning-charge me-1"></i> Run Reconciliation Now';
-      }
-    }
-
-    async function loadSuggestions() {
-      const container = document.getElementById('suggestions-list');
-      container.innerHTML = '<div class="text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Analyzing historical data... This may take a minute...</div>';
-      try {
-        const response = await fetch('/suggest-associations?days=730');
-        const result = await response.json();
-
-        if (result.suggestions_count === 0) {
-          container.innerHTML = '<p class="text-muted">No suggestions found. Analyzed ' + result.analyzed_paid_invoices + ' paid invoices and ' + result.analyzed_transactions + ' transactions.</p>';
-          return;
-        }
-
-        let html = '<p class="text-success">Found ' + result.suggestions_count + ' suggestions from ' + result.analyzed_paid_invoices + ' paid invoices!</p>';
-        for (let s of result.suggestions) {
-          const badgeColor = s.confidence >= 70 ? 'success' : (s.confidence >= 50 ? 'warning' : 'secondary');
-          html += '<div class="card suggestion-card"><div class="card-body">';
-          html += '<div class="d-flex justify-content-between"><div>';
-          html += '<strong>' + s.transaction_name + '</strong> → ' + s.company_name;
-          html += '<br><small class="text-muted">Example: Invoice ' + s.example_invoice + ' ($' + s.example_amount.toFixed(2) + ')</small>';
-          html += '</div><span class="badge confidence-badge bg-' + badgeColor + '">' + s.confidence + '%</span></div>';
-          html += '<div class="mt-3">';
-          html += '<button class="btn btn-success btn-sm" onclick="approveSuggestion(\'' + s.transaction_name.replace(/'/g, '') + '\', \'' + s.company_name.replace(/'/g, '') + '\')">✓ Approve & Learn</button>';
-          html += '</div></div></div>';
-        }
-        container.innerHTML = html;
-      } catch(e) {
-        container.innerHTML = '<p class="text-danger">Error: ' + e.message + '</p>';
-      }
-    }
-
-    async function approveSuggestion(transactionName, companyName) {
-      const response = await fetch('/teach', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ transaction_name: transactionName, company_name: companyName })
-      });
-      const result = await response.json();
-      alert(result.message);
-      loadAssociations();
-      loadSuggestions();
-    }
-
-    function displayMatches(matches) {
-      const container = document.getElementById('matches-list');
-      if (!matches || matches.length === 0) {
-        container.innerHTML = '<div class="muted-box"><span class="text-muted">No matches found.</span></div>';
-        return;
-      }
-      let html = '';
-      for(let i = 0; i < matches.length; i++) {
-        const m = matches[i];
-        const badgeColor = m.confidence >= 80 ? 'success' : (m.confidence >= 70 ? 'warning' : 'danger');
-        
-        // Format dates
-        const transDate = m.transaction_date ? new Date(m.transaction_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
-        const invDate = m.invoice_date ? new Date(m.invoice_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
-        
-        // Truncate description for display
-        const fullDescription = m.transaction_description || '';
-        const truncatedDescription = fullDescription.substring(0, 100) + (fullDescription.length > 100 ? '...' : '');
-        
-        html += '<div class="card match-card"><div class="card-body">';
-        html += '<div class="d-flex justify-content-between align-items-start"><div style="flex: 1;">';
-        html += '<h6 class="mb-2">Transaction: $' + m.transaction_amount.toFixed(2) + '</h6>';
-        html += '<div class="mb-2">';
-        html += '<span class="date-badge"><i class="bi bi-calendar-event me-1"></i>Bank: ' + transDate + '</span>';
-        html += '<span class="date-badge"><i class="bi bi-receipt me-1"></i>Invoice: ' + invDate + '</span>';
-        html += '</div>';
-        html += '<div class="description-text">';
-        html += '<small class="text-muted" style="cursor: help;">' + truncatedDescription + '</small>';
-        html += '<span class="tooltip-content">' + fullDescription.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</span>';
-        html += '</div>';
-        html += '</div><span class="badge confidence-badge bg-' + badgeColor + '">' + m.confidence + '%</span></div><div class="divider"></div>';
-        html += '<div><strong>Invoice ' + m.invoice_number + '</strong> - ' + m.company_name + '<br>';
-        html += '<small class="text-muted">Amount: $' + m.invoice_amount.toFixed(2) + ' | Expected: $' + m.expected_amount.toFixed(2) + '</small></div>';
-        
-        // Escape transaction description for onclick attributes
-        const escapedDesc = (m.transaction_description || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        const escapedCompany = (m.company_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-        
-        html += '<div class="mt-3 d-flex gap-2">';
-        html += '<button class="btn btn-success btn-sm" onclick="approveMatch(\'' + m.invoice_id + '\', \'' + (m.transaction_date || '') + '\', \'' + escapedDesc + '\', \'' + escapedCompany + '\', this)"><i class="bi bi-check-circle me-1"></i>Approve</button>';
-        html += '<button class="btn btn-danger btn-sm" onclick="denyMatch(\'' + m.invoice_id + '\', \'' + escapedDesc + '\', this)"><i class="bi bi-x-circle me-1"></i>Deny</button>';
-        html += '</div>';
-        html += '</div></div>';
-      }
-      container.innerHTML = html;
-    }
-
-    async function approveMatch(invoiceId, transactionDate, transactionDesc, companyName, buttonElement) {
-      // Find the card element and show immediate visual feedback
-      const card = buttonElement.closest('.match-card');
-      const buttons = card.querySelectorAll('button');
-      buttons.forEach(btn => btn.disabled = true);
-      buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
-
-      try {
-        const response = await fetch('/approve-bulk', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            approvals: [{
-              invoice_id: invoiceId,
-              transaction_date: transactionDate,
-              transaction_description: transactionDesc,
-              company_name: companyName
-            }]
-          })
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
         });
-        const result = await response.json();
 
-        if (result.status === 'success') {
-          // Show success and slide out
-          card.style.transition = 'all 0.3s ease';
-          card.style.background = '#d4edda';
-          card.style.borderLeftColor = '#28a745';
-          buttonElement.innerHTML = '<i class="bi bi-check-circle me-1"></i>Approved!';
-
-          setTimeout(() => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateX(100px)';
-            card.style.maxHeight = card.offsetHeight + 'px';
-            setTimeout(() => {
-              card.style.maxHeight = '0';
-              card.style.padding = '0';
-              card.style.margin = '0';
-              card.style.overflow = 'hidden';
-              setTimeout(() => card.remove(), 200);
-            }, 150);
-          }, 400);
-
-          // Update counter
-          updateMatchCount(-1);
-        } else {
-          buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed';
-          buttons.forEach(btn => btn.disabled = false);
-        }
-      } catch(e) {
-        buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
-        buttons.forEach(btn => btn.disabled = false);
-      }
-    }
-
-    async function denyMatch(invoiceId, transactionDesc, buttonElement) {
-      // Find the card element and show immediate visual feedback
-      const card = buttonElement.closest('.match-card');
-      const buttons = card.querySelectorAll('button');
-      buttons.forEach(btn => btn.disabled = true);
-      buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
-
-      try {
-        const response = await fetch('/deny', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            invoice_id: invoiceId,
-            transaction_description: transactionDesc
-          })
-        });
-        const result = await response.json();
-
-        if (result.status === 'success') {
-          // Show denied and slide out
-          card.style.transition = 'all 0.3s ease';
-          card.style.background = '#f8d7da';
-          card.style.borderLeftColor = '#dc3545';
-          buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Denied!';
-
-          setTimeout(() => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateX(-100px)';
-            card.style.maxHeight = card.offsetHeight + 'px';
-            setTimeout(() => {
-              card.style.maxHeight = '0';
-              card.style.padding = '0';
-              card.style.margin = '0';
-              card.style.overflow = 'hidden';
-              setTimeout(() => card.remove(), 200);
-            }, 150);
-          }, 400);
-
-          // Update counter
-          updateMatchCount(-1);
-        } else {
-          buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed';
-          buttons.forEach(btn => btn.disabled = false);
-        }
-      } catch(e) {
-        buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
-        buttons.forEach(btn => btn.disabled = false);
-      }
-    }
-
-    function updateMatchCount(delta) {
-      // Update the matches count in the header
-      const countBadge = document.querySelector('#matches-list')?.closest('.card')?.querySelector('.badge');
-      if (countBadge) {
-        const current = parseInt(countBadge.innerText) || 0;
-        countBadge.innerText = Math.max(0, current + delta);
-      }
-    }
-
-    async function loadValidationReport() {
-      const container = document.getElementById('validation-list');
-      const summaryDiv = document.getElementById('validation-summary');
-      
-      container.innerHTML = '<div class="text-muted"><span class="spinner-border spinner-border-sm me-2"></span>Validating payment history for all companies...</div>';
-      
-      try {
-        const response = await fetch('/validation-report?days=730');
-        const result = await response.json();
-        
-        // Update summary cards
-        document.getElementById('balanced-count').innerText = result.summary.balanced;
-        document.getElementById('short-count').innerText = result.summary.short;
-        document.getElementById('over-count').innerText = result.summary.over;
-        document.getElementById('total-companies').innerText = result.summary.total_companies;
-        summaryDiv.style.display = 'block';
-        
-        // Display results
-        let html = '';
-        
-        // Balanced companies
-        if (result.balanced_companies.length > 0) {
-          html += '<h6 class="text-success mb-3"><i class="bi bi-check-circle me-2"></i>Balanced Companies (' + result.balanced_companies.length + ')</h6>';
-          for (let company of result.balanced_companies) {
-            html += '<div class="card" style="border-left: 4px solid var(--success); margin-bottom: 10px;">';
-            html += '<div class="card-body">';
-            html += '<div class="d-flex justify-content-between align-items-start">';
-            html += '<div><strong>' + company.company_name + '</strong>';
-            html += '<br><small class="text-muted">' + company.message + '</small>';
-            html += '<br><small class="text-muted">Paid Invoices: $' + company.paid_invoices_total.toFixed(2) + ' | Payments: $' + company.payments_total.toFixed(2) + '</small>';
-            html += '</div>';
-            html += '<span class="badge bg-success">✓ OK</span>';
-            html += '</div></div></div>';
-          }
-        }
-        
-        // Companies missing payments
-        if (result.short_companies.length > 0) {
-          html += '<h6 class="text-warning mb-3 mt-4"><i class="bi bi-exclamation-triangle me-2"></i>Companies Missing Payments (' + result.short_companies.length + ')</h6>';
-          for (let company of result.short_companies) {
-            html += '<div class="card" style="border-left: 4px solid var(--warning); margin-bottom: 10px;">';
-            html += '<div class="card-body">';
-            html += '<div class="d-flex justify-content-between align-items-start">';
-            html += '<div><strong>' + company.company_name + '</strong>';
-            html += '<br><small class="text-muted">' + company.message + '</small>';
-            html += '<br><small class="text-muted">Paid Invoices: $' + company.paid_invoices_total.toFixed(2) + ' | Payments Found: $' + company.payments_total.toFixed(2) + '</small>';
-            html += '<br><small class="text-warning"><strong>Action needed:</strong> Review payment history manually</small>';
-            html += '</div>';
-            html += '<span class="badge bg-warning">⚠ SHORT</span>';
-            html += '</div></div></div>';
-          }
-        }
-        
-        // Companies with extra payments
-        if (result.over_companies.length > 0) {
-          html += '<h6 class="text-info mb-3 mt-4"><i class="bi bi-info-circle me-2"></i>Companies with Extra Payments (' + result.over_companies.length + ')</h6>';
-          for (let company of result.over_companies) {
-            html += '<div class="card" style="border-left: 4px solid var(--primary); margin-bottom: 10px;">';
-            html += '<div class="card-body">';
-            html += '<div class="d-flex justify-content-between align-items-start">';
-            html += '<div><strong>' + company.company_name + '</strong>';
-            html += '<br><small class="text-muted">' + company.message + '</small>';
-            html += '<br><small class="text-muted">Paid Invoices: $' + company.paid_invoices_total.toFixed(2) + ' | Payments Found: $' + company.payments_total.toFixed(2) + '</small>';
-            html += '<br><small class="text-info"><strong>Note:</strong> May have prepayment or payment applied to open invoice</small>';
-            html += '</div>';
-            html += '<span class="badge bg-info">ℹ OVER</span>';
-            html += '</div></div></div>';
-          }
-        }
-        
-        if (html === '') {
-          html = '<div class="muted-box"><span class="text-muted">No companies found with transactions</span></div>';
-        }
-        
-        container.innerHTML = html;
-      } catch(e) {
-        container.innerHTML = '<p class="text-danger">Error: ' + e.message + '</p>';
-      }
-    }
-
-    async function loadAssociations() {
-      const response = await fetch('/associations');
-      const result = await response.json();
-      document.getElementById('associations-count').innerText = result.count;
-      const container = document.getElementById('associations-list');
-      if (result.count === 0) {
-        container.innerHTML = '<div class="muted-box"><span class="text-muted">No associations yet...</span></div>';
-        return;
-      }
-      let html = '';
-      for(const [trans, company] of Object.entries(result.associations)) {
-        html += '<div class="list-row">';
-        html += '<div><strong>' + trans + '</strong> → ' + company + '</div>';
-        html += '<button class="btn btn-danger btn-sm" onclick="deleteAssociation(\'' + trans.replace(/'/g, '') + '\')">Delete</button>';
-        html += '</div>';
-      }
-      container.innerHTML = html;
-    }
-
-    async function deleteAssociation(name) {
-      if (confirm('Delete this association?')) {
-        await fetch('/associations/' + encodeURIComponent(name), {method: 'DELETE'});
+        // Init
         loadAssociations();
-      }
-    }
+        loadSchedule();
+        checkNotificationStatus();
 
-    async function loadSchedule() {
-      const response = await fetch('/schedule');
-      const result = await response.json();
-      document.getElementById('schedule-status').innerText = result.frequency || 'Not Set';
-      // Also populate the form fields
-      document.getElementById('frequency').value = result.frequency || 'none';
-      document.getElementById('schedule-time').value = result.time || '09:00';
-    }
-
-    async function checkNotificationStatus() {
-      try {
-        const response = await fetch('/health');
-        const result = await response.json();
-
-        const emailStatus = result.services.email === 'configured' ?
-          '<span class="text-success">✓ Configured</span>' :
-          '<span class="text-warning">⚠ Not configured - Add SMTP settings to .env</span>';
-
-        const whatsappStatus = result.services.whatsapp === 'configured' ?
-          '<span class="text-success">✓ Configured</span>' :
-          '<span class="text-warning">⚠ Not configured - Add Twilio credentials to .env</span>';
-
-        document.getElementById('email-status').innerHTML = emailStatus;
-        document.getElementById('whatsapp-status').innerHTML = whatsappStatus;
-      } catch(e) {
-        console.error('Failed to check notification status:', e);
-      }
-    }
-
-    async function sendTestNotification(type) {
-      const resultDiv = document.getElementById('notification-result');
-      resultDiv.innerHTML = '<div class="alert alert-info">Sending test notification...</div>';
-      try {
-        const response = await fetch('/notification/test', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            via_email: type === 'email' || type === 'both',
-            via_whatsapp: type === 'whatsapp' || type === 'both'
-          })
+        document.getElementById('teach-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const response = await fetch('/teach', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    transaction_name: document.getElementById('transaction-name').value,
+                    company_name: document.getElementById('company-name').value
+                })
+            });
+            const result = await response.json();
+            alert(result.message);
+            document.getElementById('teach-form').reset();
+            loadAssociations();
         });
-        const result = await response.json();
 
-        if (result.status === 'success') {
-          let message = '<div class="alert alert-success"><strong>Test Results:</strong><br>';
-          if (result.results?.email?.sent) {
-            message += '✓ Email sent successfully!<br>';
-          } else if (result.results?.email?.error) {
-            message += '✗ Email failed: ' + result.results.email.error + '<br>';
-          } else if (type === 'email' || type === 'both') {
-            message += '⚠ Email not configured<br>';
-          }
-          if (result.results?.whatsapp?.sent) {
-            message += '✓ WhatsApp sent successfully!<br>';
-          } else if (result.results?.whatsapp?.error) {
-            message += '✗ WhatsApp failed: ' + result.results.whatsapp.error + '<br>';
-          } else if (type === 'whatsapp' || type === 'both') {
-            message += '⚠ WhatsApp not configured<br>';
-          }
-          message += '</div>';
-          resultDiv.innerHTML = message;
-        } else {
-          resultDiv.innerHTML = '<div class="alert alert-danger">Test failed: ' + (result.message || result.detail || 'Unknown error') + '</div>';
+        document.getElementById('schedule-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const response = await fetch('/schedule', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    frequency: document.getElementById('frequency').value,
+                    time: document.getElementById('schedule-time').value
+                })
+            });
+            const result = await response.json();
+            alert(result.message);
+            loadSchedule();
+        });
+
+        async function runReconciliation() {
+            const btn = document.getElementById('btn-reconcile');
+            const container = document.getElementById('matches-list');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Running...';
+            container.innerHTML = '<div class="empty-state"><span class="spinner"></span><p>Running reconciliation...</p></div>';
+
+            try {
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - 90);
+                const startDateStr = startDate.toISOString().split('T')[0];
+                const endDateStr = endDate.toISOString().split('T')[0];
+
+                const response = await fetch(`/reconcile?start_date=${startDateStr}&end_date=${endDateStr}&auto_approve_threshold=50`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.detail || `Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.status === 'success') {
+                    displayMatches(result.matches);
+                    document.getElementById('matches-count').innerText = result.matches_found || 0;
+                    document.getElementById('last-run').innerText = new Date().toLocaleTimeString();
+
+                    if (result.matches_found === 0) {
+                        container.innerHTML = `<div class="alert alert-info">Reconciliation complete. Analyzed ${result.transactions_analyzed || 0} transactions and ${result.invoices_analyzed || 0} invoices. No matches found.</div>`;
+                    }
+                }
+            } catch(e) {
+                container.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${e.message}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-lightning-charge-fill"></i> Run Reconciliation';
+            }
         }
-      } catch(e) {
-        resultDiv.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
-      }
-    }
-  </script>
+
+        function displayMatches(matches) {
+            const container = document.getElementById('matches-list');
+            if (!matches || matches.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No matches found.</p></div>';
+                return;
+            }
+
+            let html = '';
+            matches.forEach((m, i) => {
+                const badgeClass = m.confidence >= 80 ? 'high' : (m.confidence >= 70 ? 'medium' : 'low');
+                const transDate = m.transaction_date ? new Date(m.transaction_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                const invDate = m.invoice_date ? new Date(m.invoice_date).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}) : 'N/A';
+                const fullDesc = m.transaction_description || '';
+                const truncDesc = fullDesc.substring(0, 80) + (fullDesc.length > 80 ? '...' : '');
+                const escapedDesc = fullDesc.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const escapedCompany = (m.company_name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+                html += `
+                <div class="card match-card" id="match-${i}">
+                    <div class="card-body">
+                        <div class="match-header">
+                            <div class="match-amount">$${m.transaction_amount.toFixed(2)}</div>
+                            <span class="confidence-badge ${badgeClass}">${m.confidence}%</span>
+                        </div>
+                        <div class="match-dates">
+                            <span class="date-badge"><i class="bi bi-bank"></i> Bank: ${transDate}</span>
+                            <span class="date-badge"><i class="bi bi-receipt"></i> Invoice: ${invDate}</span>
+                        </div>
+                        <div class="match-description">
+                            ${truncDesc}
+                            <div class="tooltip-content">${fullDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                        </div>
+                        <div class="match-divider"></div>
+                        <div class="match-invoice">
+                            <div class="match-invoice-title">Invoice ${m.invoice_number} - ${m.company_name}</div>
+                            <div class="match-invoice-details">Amount: $${m.invoice_amount.toFixed(2)} | Expected: $${m.expected_amount.toFixed(2)}</div>
+                        </div>
+                        <div class="match-actions">
+                            <button class="btn btn-sm btn-success" onclick="approveMatch('${m.invoice_id}', '${m.transaction_date || ''}', '${escapedDesc}', '${escapedCompany}', this)">
+                                <i class="bi bi-check-circle"></i> Approve
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="denyMatch('${m.invoice_id}', '${escapedDesc}', this)">
+                                <i class="bi bi-x-circle"></i> Deny
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function approveMatch(invoiceId, transactionDate, transactionDesc, companyName, btn) {
+            const card = btn.closest('.match-card');
+            const buttons = card.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+            btn.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                const response = await fetch('/approve-bulk', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        approvals: [{ invoice_id: invoiceId, transaction_date: transactionDate, transaction_description: transactionDesc, company_name: companyName }]
+                    })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.background = 'var(--accent-green-light)';
+                    card.style.borderLeftColor = 'var(--accent-green)';
+                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Approved!';
+                    setTimeout(() => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateX(50px)';
+                        setTimeout(() => card.remove(), 300);
+                    }, 500);
+                    updateMatchCount(-1);
+                } else {
+                    btn.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
+                    buttons.forEach(b => b.disabled = false);
+                }
+            } catch(e) {
+                btn.innerHTML = '<i class="bi bi-x-circle"></i> Error';
+                buttons.forEach(b => b.disabled = false);
+            }
+        }
+
+        async function denyMatch(invoiceId, transactionDesc, btn) {
+            const card = btn.closest('.match-card');
+            const buttons = card.querySelectorAll('button');
+            buttons.forEach(b => b.disabled = true);
+            btn.innerHTML = '<span class="spinner"></span>';
+
+            try {
+                const response = await fetch('/deny', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ invoice_id: invoiceId, transaction_description: transactionDesc })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.background = 'var(--accent-red-light)';
+                    card.style.borderLeftColor = 'var(--accent-red)';
+                    btn.innerHTML = '<i class="bi bi-x-circle"></i> Denied!';
+                    setTimeout(() => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateX(-50px)';
+                        setTimeout(() => card.remove(), 300);
+                    }, 500);
+                    updateMatchCount(-1);
+                } else {
+                    btn.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
+                    buttons.forEach(b => b.disabled = false);
+                }
+            } catch(e) {
+                btn.innerHTML = '<i class="bi bi-x-circle"></i> Error';
+                buttons.forEach(b => b.disabled = false);
+            }
+        }
+
+        function updateMatchCount(delta) {
+            const el = document.getElementById('matches-count');
+            el.innerText = Math.max(0, (parseInt(el.innerText) || 0) + delta);
+        }
+
+        async function loadSuggestions() {
+            const container = document.getElementById('suggestions-list');
+            container.innerHTML = '<div class="empty-state"><span class="spinner"></span><p>Analyzing historical data...</p></div>';
+
+            try {
+                const response = await fetch('/suggest-associations?days=730');
+                const result = await response.json();
+
+                if (result.suggestions_count === 0) {
+                    container.innerHTML = `<div class="alert alert-info">No suggestions found. Analyzed ${result.analyzed_paid_invoices} paid invoices.</div>`;
+                    return;
+                }
+
+                let html = `<div class="alert alert-success">Found ${result.suggestions_count} suggestions from ${result.analyzed_paid_invoices} paid invoices!</div>`;
+                result.suggestions.forEach(s => {
+                    const badgeClass = s.confidence >= 70 ? 'high' : (s.confidence >= 50 ? 'medium' : 'low');
+                    html += `
+                    <div class="card suggestion-card">
+                        <div class="card-body">
+                            <div class="match-header">
+                                <div>
+                                    <strong>${s.transaction_name}</strong> → ${s.company_name}<br>
+                                    <small style="color: var(--text-secondary);">Example: Invoice ${s.example_invoice} ($${s.example_amount.toFixed(2)})</small>
+                                </div>
+                                <span class="confidence-badge ${badgeClass}">${s.confidence}%</span>
+                            </div>
+                            <div style="margin-top: 12px;">
+                                <button class="btn btn-sm btn-success" onclick="approveSuggestion('${s.transaction_name.replace(/'/g, '')}', '${s.company_name.replace(/'/g, '')}')">
+                                    <i class="bi bi-check"></i> Approve & Learn
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch(e) {
+                container.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function approveSuggestion(transactionName, companyName) {
+            const response = await fetch('/teach', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ transaction_name: transactionName, company_name: companyName })
+            });
+            const result = await response.json();
+            alert(result.message);
+            loadAssociations();
+            loadSuggestions();
+        }
+
+        async function loadValidationReport() {
+            const container = document.getElementById('validation-list');
+            const summaryDiv = document.getElementById('validation-summary');
+            container.innerHTML = '<div class="empty-state"><span class="spinner"></span><p>Validating payment history...</p></div>';
+
+            try {
+                const response = await fetch('/validation-report?days=730');
+                const result = await response.json();
+
+                document.getElementById('balanced-count').innerText = result.summary.balanced;
+                document.getElementById('short-count').innerText = result.summary.short;
+                document.getElementById('over-count').innerText = result.summary.over;
+                document.getElementById('total-companies').innerText = result.summary.total_companies;
+                summaryDiv.style.display = 'grid';
+
+                let html = '';
+                if (result.balanced_companies.length > 0) {
+                    html += `<div class="section-title" style="color: var(--accent-green); margin: 20px 0 12px;"><i class="bi bi-check-circle"></i> Balanced Companies (${result.balanced_companies.length})</div>`;
+                    result.balanced_companies.forEach(c => {
+                        html += `<div class="card validation-card balanced"><div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div><strong>${c.company_name}</strong><br><small style="color: var(--text-secondary);">${c.message}</small><br>
+                                <small style="color: var(--text-secondary);">Paid: $${c.paid_invoices_total.toFixed(2)} | Payments: $${c.payments_total.toFixed(2)}</small></div>
+                                <span class="badge badge-success">OK</span>
+                            </div></div></div>`;
+                    });
+                }
+                if (result.short_companies.length > 0) {
+                    html += `<div class="section-title" style="color: var(--accent-orange); margin: 20px 0 12px;"><i class="bi bi-exclamation-triangle"></i> Missing Payments (${result.short_companies.length})</div>`;
+                    result.short_companies.forEach(c => {
+                        html += `<div class="card validation-card short"><div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div><strong>${c.company_name}</strong><br><small style="color: var(--text-secondary);">${c.message}</small><br>
+                                <small style="color: var(--text-secondary);">Paid: $${c.paid_invoices_total.toFixed(2)} | Found: $${c.payments_total.toFixed(2)}</small></div>
+                                <span class="badge badge-warning">SHORT</span>
+                            </div></div></div>`;
+                    });
+                }
+                if (result.over_companies.length > 0) {
+                    html += `<div class="section-title" style="color: var(--accent-blue); margin: 20px 0 12px;"><i class="bi bi-info-circle"></i> Extra Payments (${result.over_companies.length})</div>`;
+                    result.over_companies.forEach(c => {
+                        html += `<div class="card validation-card over"><div class="card-body">
+                            <div style="display: flex; justify-content: space-between; align-items: start;">
+                                <div><strong>${c.company_name}</strong><br><small style="color: var(--text-secondary);">${c.message}</small><br>
+                                <small style="color: var(--text-secondary);">Paid: $${c.paid_invoices_total.toFixed(2)} | Found: $${c.payments_total.toFixed(2)}</small></div>
+                                <span class="badge badge-info">OVER</span>
+                            </div></div></div>`;
+                    });
+                }
+                container.innerHTML = html || '<div class="empty-state"><p>No companies found</p></div>';
+            } catch(e) {
+                container.innerHTML = `<div class="alert alert-danger">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function loadAssociations() {
+            const response = await fetch('/associations');
+            const result = await response.json();
+            document.getElementById('associations-count').innerText = result.count;
+            const container = document.getElementById('associations-list');
+
+            if (result.count === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No associations yet...</p></div>';
+                return;
+            }
+
+            let html = '';
+            for (const [trans, company] of Object.entries(result.associations)) {
+                html += `<div class="list-row">
+                    <div><strong>${trans}</strong> → ${company}</div>
+                    <button class="btn btn-sm btn-danger" onclick="deleteAssociation('${trans.replace(/'/g, '')}')">Delete</button>
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        async function deleteAssociation(name) {
+            if (confirm('Delete this association?')) {
+                await fetch('/associations/' + encodeURIComponent(name), {method: 'DELETE'});
+                loadAssociations();
+            }
+        }
+
+        async function loadSchedule() {
+            const response = await fetch('/schedule');
+            const result = await response.json();
+            document.getElementById('schedule-status').innerText = result.frequency || 'Not Set';
+            document.getElementById('frequency').value = result.frequency || 'none';
+            document.getElementById('schedule-time').value = result.time || '09:00';
+        }
+
+        async function checkNotificationStatus() {
+            try {
+                const response = await fetch('/health');
+                const result = await response.json();
+                document.getElementById('email-status').innerHTML = result.services.email === 'configured' ?
+                    '<span style="color: var(--accent-green);">Configured</span>' :
+                    '<span style="color: var(--accent-orange);">Not configured</span>';
+                document.getElementById('whatsapp-status').innerHTML = result.services.whatsapp === 'configured' ?
+                    '<span style="color: var(--accent-green);">Configured</span>' :
+                    '<span style="color: var(--accent-orange);">Not configured</span>';
+            } catch(e) {}
+        }
+
+        async function sendTestNotification(type) {
+            const resultDiv = document.getElementById('notification-result');
+            resultDiv.innerHTML = '<div class="alert alert-info"><span class="spinner"></span> Sending test notification...</div>';
+
+            try {
+                const response = await fetch('/notification/test', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        via_email: type === 'email' || type === 'both',
+                        via_whatsapp: type === 'whatsapp' || type === 'both'
+                    })
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    let msg = '<strong>Test Results:</strong><br>';
+                    if (result.results?.email?.sent) msg += 'Email sent successfully!<br>';
+                    else if (result.results?.email?.error) msg += 'Email failed: ' + result.results.email.error + '<br>';
+                    if (result.results?.whatsapp?.sent) msg += 'WhatsApp sent successfully!<br>';
+                    else if (result.results?.whatsapp?.error) msg += 'WhatsApp failed: ' + result.results.whatsapp.error + '<br>';
+                    resultDiv.innerHTML = '<div class="alert alert-success">' + msg + '</div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="alert alert-danger">Test failed</div>';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="alert alert-danger">Error: ' + e.message + '</div>';
+            }
+        }
+    </script>
 </body>
 </html>

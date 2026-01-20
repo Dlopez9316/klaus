@@ -4,365 +4,965 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Klaus Collections Agent</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --card-2: #f1f5f9;
-            --text: #334155;
-            --text-strong: #1e293b;
-            --muted: #64748b;
-            --primary: #6366f1;
-            --primary-strong: #4f46e5;
-            --primary-light: #eef2ff;
-            --warning: #f59e0b;
-            --warning-light: #fef3c7;
-            --success: #10b981;
-            --success-light: #d1fae5;
-            --danger: #ef4444;
-            --danger-light: #fee2e2;
-            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05);
-            --shadow-lg: 0 4px 20px rgba(0,0,0,0.08);
-            --radius: 16px;
-            --border: #e2e8f0;
-            --vip: #8b5cf6;
-            --vip-light: #ede9fe;
+            /* Apple-inspired color system */
+            --bg-primary: #f5f5f7;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: rgba(255, 255, 255, 0.72);
+            --bg-elevated: rgba(255, 255, 255, 0.9);
+
+            --text-primary: #1d1d1f;
+            --text-secondary: #86868b;
+            --text-tertiary: #a1a1a6;
+
+            --accent-blue: #007aff;
+            --accent-blue-light: rgba(0, 122, 255, 0.1);
+            --accent-green: #34c759;
+            --accent-green-light: rgba(52, 199, 89, 0.1);
+            --accent-orange: #ff9500;
+            --accent-orange-light: rgba(255, 149, 0, 0.1);
+            --accent-red: #ff3b30;
+            --accent-red-light: rgba(255, 59, 48, 0.1);
+            --accent-purple: #af52de;
+            --accent-purple-light: rgba(175, 82, 222, 0.1);
+            --accent-indigo: #5856d6;
+            --accent-indigo-light: rgba(88, 86, 214, 0.1);
+
+            --border-light: rgba(0, 0, 0, 0.06);
+            --border-medium: rgba(0, 0, 0, 0.1);
+
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 18px;
+            --radius-xl: 22px;
+
+            --font-system: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
         }
-        * { font-family: Inter, system-ui, -apple-system, sans-serif; }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background: var(--bg);
-            color: var(--text);
+            font-family: var(--font-system);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
+            -webkit-font-smoothing: antialiased;
             min-height: 100vh;
+            padding: 24px;
         }
 
-        /* Navbar */
-        .navbar {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
-            box-shadow: var(--shadow);
-        }
-        .navbar-brand {
-            color: var(--text-strong) !important;
-            font-weight: 700;
+        /* Subtle ambient background */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(88, 86, 214, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(0, 122, 255, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
         }
 
-        /* Cards */
-        .card {
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            background: var(--card);
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
-        .card-header {
-            background: var(--card);
-            border-bottom: 1px solid var(--border);
+
+        /* Header */
+        .header {
+            background: var(--bg-elevated);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            padding: 20px 28px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+            animation: fadeDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        @keyframes fadeDown {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-blue) 100%);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(88, 86, 214, 0.3);
+        }
+
+        .logo-icon i {
+            font-size: 22px;
+            color: white;
+        }
+
+        .header-title h1 {
+            font-size: 22px;
             font-weight: 600;
-            color: var(--text-strong);
-            padding: 1rem 1.25rem;
+            letter-spacing: -0.03em;
+            margin-bottom: 2px;
         }
 
-        /* Stats */
-        .stat-card {
-            text-align: center;
-            padding: 1.5rem;
-            transition: all 0.2s ease;
+        .header-title p {
+            font-size: 13px;
+            color: var(--text-secondary);
         }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            border: none;
+            font-family: inherit;
+            letter-spacing: -0.01em;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-medium);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-primary);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: #0066d6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+            box-shadow: 0 2px 8px rgba(52, 199, 89, 0.3);
+        }
+
+        .btn-success:hover {
+            background: #2db24d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(52, 199, 89, 0.4);
+        }
+
+        .btn-success:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn i {
+            font-size: 16px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
         .stat-card:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-md);
         }
-        .stat-value {
-            font-size: 2.25rem;
-            font-weight: 700;
-            color: var(--text-strong);
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.15s; }
+        .stat-card:nth-child(3) { animation-delay: 0.2s; }
+        .stat-card:nth-child(4) { animation-delay: 0.25s; }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
         }
+
+        .stat-card.red::before { background: var(--accent-red); }
+        .stat-card.orange::before { background: var(--accent-orange); }
+        .stat-card.green::before { background: var(--accent-green); }
+        .stat-card.purple::before { background: var(--accent-purple); }
+
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .stat-card.red .stat-icon { background: var(--accent-red-light); color: var(--accent-red); }
+        .stat-card.orange .stat-icon { background: var(--accent-orange-light); color: var(--accent-orange); }
+        .stat-card.green .stat-icon { background: var(--accent-green-light); color: var(--accent-green); }
+        .stat-card.purple .stat-icon { background: var(--accent-purple-light); color: var(--accent-purple); }
+
+        .stat-icon i {
+            font-size: 18px;
+        }
+
         .stat-label {
-            color: var(--muted);
-            font-size: 0.875rem;
+            font-size: 12px;
+            color: var(--text-secondary);
             font-weight: 500;
-            margin-top: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
         }
 
-        /* Email cards */
-        .email-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-left: 4px solid var(--primary);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
+        .stat-value {
+            font-size: 36px;
+            font-weight: 600;
+            letter-spacing: -0.04em;
+            line-height: 1;
         }
-        .email-card:hover {
-            box-shadow: var(--shadow-lg);
-            transform: translateY(-2px);
-        }
-        .email-card.vip { border-left-color: var(--vip); }
-        .email-card.approval { border-left-color: var(--warning); }
-        .email-card.escalation-1 { border-left-color: var(--success); }
-        .email-card.escalation-2 { border-left-color: #eab308; }
-        .email-card.escalation-3 { border-left-color: var(--warning); }
-        .email-card.escalation-4 { border-left-color: #f97316; }
-        .email-card.escalation-5 { border-left-color: var(--danger); }
 
-        /* Badges */
-        .badge-vip {
-            background: var(--vip-light);
-            color: var(--vip);
+        /* Actions Card */
+        .actions-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .actions-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .actions-header i {
+            color: var(--accent-orange);
+            font-size: 18px;
+        }
+
+        .actions-header span {
+            font-size: 15px;
             font-weight: 600;
         }
-        .badge-level {
-            background: var(--primary-light);
-            color: var(--primary);
+
+        .actions-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-large {
+            padding: 14px 24px;
+            font-size: 15px;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: var(--accent-blue-light);
+            border-radius: var(--radius-sm);
+            color: var(--accent-blue);
+            font-size: 13px;
             font-weight: 500;
         }
+
+        .loading.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--accent-blue-light);
+            border-top-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(10px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.35s; }
+        .card:nth-child(2) { animation-delay: 0.4s; }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-header-left i {
+            font-size: 18px;
+        }
+
+        .card-header-left.green i { color: var(--accent-green); }
+        .card-header-left.orange i { color: var(--accent-orange); }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .card-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        .card-badge.green {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .card-badge.orange {
+            background: var(--accent-orange);
+            color: white;
+        }
+
+        .card-body {
+            padding: 16px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        /* Email Card */
+        .email-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-light);
+            border-left: 4px solid var(--accent-blue);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .email-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .email-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .email-card.vip { border-left-color: var(--accent-purple); }
+        .email-card.approval { border-left-color: var(--accent-orange); }
+        .email-card.escalation-1 { border-left-color: var(--accent-green); }
+        .email-card.escalation-2 { border-left-color: #d4a600; }
+        .email-card.escalation-3 { border-left-color: var(--accent-orange); }
+        .email-card.escalation-4 { border-left-color: #f97316; }
+        .email-card.escalation-5 { border-left-color: var(--accent-red); }
+
+        .email-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .email-contact {
+            flex: 1;
+        }
+
+        .email-name {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .email-address {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .email-amount {
+            text-align: right;
+        }
+
+        .email-amount-value {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .email-invoice-count {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .email-badges {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .badge-vip {
+            background: var(--accent-purple-light);
+            color: var(--accent-purple);
+        }
+
         .badge-days {
-            background: var(--card-2);
-            color: var(--text);
-            font-weight: 500;
+            background: var(--bg-primary);
+            color: var(--text-primary);
         }
 
-        /* Buttons */
-        .btn-primary {
-            background: var(--primary);
-            border: none;
-            border-radius: 10px;
-            font-weight: 500;
-            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-            transition: all 0.2s ease;
-        }
-        .btn-primary:hover {
-            background: var(--primary-strong);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-        }
-        .btn-success {
-            background: var(--success);
-            border: none;
-            border-radius: 10px;
-            font-weight: 500;
-        }
-        .btn-outline-secondary {
-            border-color: var(--border);
-            color: var(--text);
-            border-radius: 10px;
-        }
-        .btn-outline-secondary:hover {
-            background: var(--card-2);
-            border-color: var(--border);
-            color: var(--text-strong);
-        }
-        .btn-outline-primary {
-            border-color: var(--primary);
-            color: var(--primary);
-            border-radius: 8px;
-        }
-        .btn-outline-primary:hover {
-            background: var(--primary-light);
-            border-color: var(--primary);
-            color: var(--primary);
+        .badge-level {
+            background: var(--accent-blue-light);
+            color: var(--accent-blue);
         }
 
-        /* Loading */
-        .loading { display: none; }
-        .loading.show { display: flex; align-items: center; gap: 0.5rem; }
+        .email-companies {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+
+        .email-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 8px 14px;
+            font-size: 12px;
+            border-radius: var(--radius-sm);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-primary);
+        }
+
+        /* History Section */
+        .history-section {
+            display: none;
+            margin-top: 24px;
+            animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .history-section.show {
+            display: block;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .table td {
+            padding: 14px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border-light);
+            color: var(--text-primary);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
 
         /* Modal */
-        .modal-content {
-            border: none;
-            border-radius: var(--radius);
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-backdrop.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
             box-shadow: var(--shadow-lg);
+            width: 90%;
+            max-width: 640px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.95) translateY(10px);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
+        .modal-backdrop.show .modal {
+            transform: scale(1) translateY(0);
+        }
+
         .modal-header {
-            border-bottom: 1px solid var(--border);
-        }
-        .modal-footer {
-            border-top: 1px solid var(--border);
-        }
-        .email-body-preview {
-            background: var(--card-2);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1rem;
-            font-family: 'SF Mono', Monaco, monospace;
-            font-size: 0.875rem;
-            white-space: pre-wrap;
-            max-height: 400px;
-            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-light);
         }
 
-        /* History table */
-        .table {
-            color: var(--text);
-        }
-        .table th {
-            color: var(--text-strong);
+        .modal-title {
+            font-size: 17px;
             font-weight: 600;
-            border-bottom-color: var(--border);
-        }
-        .table td {
-            border-bottom-color: var(--border);
-            vertical-align: middle;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Text utilities */
-        .text-muted { color: var(--muted) !important; }
-        strong { color: var(--text-strong); }
+        .modal-title i {
+            color: var(--accent-blue);
+        }
 
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--card-2); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--border-medium);
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-row {
+            display: flex;
+            margin-bottom: 16px;
+        }
+
+        .modal-label {
+            width: 80px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .modal-value {
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+
+        .modal-divider {
+            height: 1px;
+            background: var(--border-light);
+            margin: 20px 0;
+        }
+
+        .email-body-preview {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            font-family: 'SF Mono', ui-monospace, monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 320px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .header-left {
+                flex-direction: column;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-buttons {
+                flex-direction: column;
+            }
+
+            .btn-large {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar mb-4">
-        <div class="container">
-            <span class="navbar-brand mb-0 h1">
-                <i class="bi bi-robot me-2"></i>Klaus Collections Agent
-            </span>
-            <a href="/" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Back to Reconciliation
-            </a>
-        </div>
-    </nav>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-icon">
+                    <i class="bi bi-robot"></i>
+                </div>
+                <div class="header-title">
+                    <h1>Klaus Collections Agent</h1>
+                    <p>Automated collection emails for overdue invoices</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="/" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back to Reconciliation
+                </a>
+            </div>
+        </header>
 
-    <div class="container pb-5">
-        <!-- Stats Row -->
-        <div class="row mb-4 g-3">
-            <div class="col-6 col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="stat-overdue">-</div>
-                    <div class="stat-label">Overdue Invoices</div>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card red">
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-circle"></i>
                 </div>
+                <div class="stat-label">Overdue Invoices</div>
+                <div class="stat-value" id="stat-overdue">-</div>
             </div>
-            <div class="col-6 col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="stat-amount">-</div>
-                    <div class="stat-label">Total Outstanding</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="stat-autonomous">-</div>
-                    <div class="stat-label">Ready to Send</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="card stat-card">
-                    <div class="stat-value" id="stat-approval">-</div>
-                    <div class="stat-label">Need Approval</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Main Actions -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-lightning-charge me-2"></i>Actions</span>
-            </div>
-            <div class="card-body">
-                <button class="btn btn-primary btn-lg me-2" onclick="analyzeInvoices()" id="btn-analyze">
-                    <i class="bi bi-search me-2"></i>Analyze Overdue Invoices
-                </button>
-                <button class="btn btn-success btn-lg me-2" onclick="sendAutonomousEmails()" id="btn-send" disabled>
-                    <i class="bi bi-send me-2"></i>Send Autonomous Emails
-                </button>
-                <button class="btn btn-outline-secondary" onclick="loadHistory()">
-                    <i class="bi bi-clock-history me-2"></i>View History
-                </button>
-                <div class="loading mt-3" id="loading">
-                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                    <span class="text-muted">Analyzing invoices...</span>
+            <div class="stat-card orange">
+                <div class="stat-icon">
+                    <i class="bi bi-currency-dollar"></i>
                 </div>
+                <div class="stat-label">Total Outstanding</div>
+                <div class="stat-value" id="stat-amount">-</div>
+            </div>
+
+            <div class="stat-card green">
+                <div class="stat-icon">
+                    <i class="bi bi-send-check"></i>
+                </div>
+                <div class="stat-label">Ready to Send</div>
+                <div class="stat-value" id="stat-autonomous">-</div>
+            </div>
+
+            <div class="stat-card purple">
+                <div class="stat-icon">
+                    <i class="bi bi-shield-exclamation"></i>
+                </div>
+                <div class="stat-label">Need Approval</div>
+                <div class="stat-value" id="stat-approval">-</div>
             </div>
         </div>
 
-        <!-- Results -->
-        <div class="row g-4">
+        <!-- Actions Card -->
+        <div class="actions-card">
+            <div class="actions-header">
+                <i class="bi bi-lightning-charge-fill"></i>
+                <span>Actions</span>
+            </div>
+            <div class="actions-buttons">
+                <button class="btn btn-primary btn-large" onclick="analyzeInvoices()" id="btn-analyze">
+                    <i class="bi bi-search"></i>
+                    Analyze Overdue Invoices
+                </button>
+                <button class="btn btn-success btn-large" onclick="sendAutonomousEmails()" id="btn-send" disabled>
+                    <i class="bi bi-send"></i>
+                    Send Autonomous Emails
+                </button>
+                <button class="btn btn-secondary btn-large" onclick="loadHistory()">
+                    <i class="bi bi-clock-history"></i>
+                    View History
+                </button>
+            </div>
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <span>Analyzing invoices...</span>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="content-grid">
             <!-- Autonomous Emails -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-check-circle text-success me-2"></i>Autonomous Emails</span>
-                        <span class="badge bg-success" id="count-autonomous">0</span>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-left green">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span class="card-title">Autonomous Emails</span>
                     </div>
-                    <div class="card-body" id="autonomous-list" style="max-height: 600px; overflow-y: auto;">
-                        <p class="text-muted text-center py-4">Click "Analyze" to see emails ready to send</p>
+                    <span class="card-badge green" id="count-autonomous">0</span>
+                </div>
+                <div class="card-body" id="autonomous-list">
+                    <div class="empty-state">
+                        <i class="bi bi-envelope"></i>
+                        <p>Click "Analyze" to see emails ready to send</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Approval Required -->
-            <div class="col-md-6">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-exclamation-triangle text-warning me-2"></i>Requires Approval</span>
-                        <span class="badge bg-warning text-dark" id="count-approval">0</span>
+            <!-- Requires Approval -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-left orange">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span class="card-title">Requires Approval</span>
                     </div>
-                    <div class="card-body" id="approval-list" style="max-height: 600px; overflow-y: auto;">
-                        <p class="text-muted text-center py-4">VIP clients and high-value invoices appear here</p>
+                    <span class="card-badge orange" id="count-approval">0</span>
+                </div>
+                <div class="card-body" id="approval-list">
+                    <div class="empty-state">
+                        <i class="bi bi-shield-check"></i>
+                        <p>VIP clients and high-value invoices appear here</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- History -->
-        <div class="row mt-4" id="history-section" style="display: none;">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-clock-history me-2"></i>Communication History</span>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('history-section').style.display='none'">
-                            <i class="bi bi-x"></i>
-                        </button>
+        <!-- History Section -->
+        <div class="history-section" id="history-section">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-left">
+                        <i class="bi bi-clock-history" style="color: var(--accent-blue);"></i>
+                        <span class="card-title">Communication History</span>
                     </div>
-                    <div class="card-body" id="history-list" style="max-height: 400px; overflow-y: auto;">
-                    </div>
+                    <button class="modal-close" onclick="document.getElementById('history-section').classList.remove('show')">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+                <div class="card-body" id="history-list" style="max-height: 400px;">
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Email Preview Modal -->
-    <div class="modal fade" id="emailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-envelope me-2"></i>Email Preview</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-backdrop" id="emailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="bi bi-envelope"></i>
+                    Email Preview
                 </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-sm-2"><strong>To:</strong></div>
-                        <div class="col-sm-10" id="modal-to"></div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-2"><strong>Subject:</strong></div>
-                        <div class="col-sm-10" id="modal-subject"></div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-2"><strong>CC:</strong></div>
-                        <div class="col-sm-10" id="modal-cc"></div>
-                    </div>
-                    <hr>
-                    <div id="modal-body" class="email-body-preview"></div>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-row">
+                    <span class="modal-label">To:</span>
+                    <span class="modal-value" id="modal-to"></span>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="modal-send-btn" onclick="sendFromModal()">
-                        <i class="bi bi-send me-1"></i>Approve & Send
-                    </button>
+                <div class="modal-row">
+                    <span class="modal-label">Subject:</span>
+                    <span class="modal-value" id="modal-subject"></span>
                 </div>
+                <div class="modal-row">
+                    <span class="modal-label">CC:</span>
+                    <span class="modal-value" id="modal-cc"></span>
+                </div>
+                <div class="modal-divider"></div>
+                <div id="modal-body" class="email-body-preview"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn btn-success" id="modal-send-btn" onclick="sendFromModal()">
+                    <i class="bi bi-send"></i>
+                    Approve & Send
+                </button>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let analysisResults = null;
         let currentEmailData = null;
@@ -372,7 +972,7 @@
             const loading = document.getElementById('loading');
 
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyzing...';
+            btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Analyzing...';
             loading.classList.add('show');
             document.getElementById('btn-send').disabled = true;
 
@@ -420,7 +1020,7 @@
             }
 
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-search me-2"></i>Analyze Overdue Invoices';
+            btn.innerHTML = '<i class="bi bi-search"></i> Analyze Overdue Invoices';
             loading.classList.remove('show');
         }
 
@@ -428,6 +1028,7 @@
             const el = document.getElementById(id);
             el.textContent = value;
             el.style.transform = 'scale(1.1)';
+            el.style.transition = 'transform 0.2s ease';
             setTimeout(() => el.style.transform = 'scale(1)', 200);
         }
 
@@ -435,7 +1036,9 @@
             const container = document.getElementById(containerId);
 
             if (!emails || emails.length === 0) {
-                container.innerHTML = '<p class="text-muted text-center py-4">No emails in this category</p>';
+                const icon = requiresApproval ? 'bi-shield-check' : 'bi-envelope';
+                const text = requiresApproval ? 'No emails requiring approval' : 'No emails ready to send';
+                container.innerHTML = `<div class="empty-state"><i class="bi ${icon}"></i><p>${text}</p></div>`;
                 return;
             }
 
@@ -443,34 +1046,35 @@
             emails.forEach((email, index) => {
                 const escalationClass = `escalation-${email.escalation_level || 1}`;
                 const vipClass = email.is_vip ? 'vip' : '';
-                const vipBadge = email.is_vip ? '<span class="badge badge-vip ms-2">VIP</span>' : '';
+                const vipBadge = email.is_vip ? '<span class="badge badge-vip">VIP</span>' : '';
 
                 html += `
                     <div class="email-card ${escalationClass} ${vipClass}" id="email-${requiresApproval ? 'approval' : 'auto'}-${index}">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <strong>${email.contact_name || 'Unknown'}</strong>${vipBadge}
-                                <br><small class="text-muted">${email.contact_email || ''}</small>
+                        <div class="email-header">
+                            <div class="email-contact">
+                                <div class="email-name">
+                                    ${email.contact_name || 'Unknown'}
+                                    ${vipBadge}
+                                </div>
+                                <div class="email-address">${email.contact_email || ''}</div>
                             </div>
-                            <div class="text-end">
-                                <strong style="font-size: 1.1rem;">$${(email.total_balance || 0).toLocaleString()}</strong>
-                                <br><small class="text-muted">${email.invoice_count || 0} invoice(s)</small>
+                            <div class="email-amount">
+                                <div class="email-amount-value">$${(email.total_balance || 0).toLocaleString()}</div>
+                                <div class="email-invoice-count">${email.invoice_count || 0} invoice(s)</div>
                             </div>
                         </div>
-                        <div class="mb-2">
-                            <span class="badge badge-days me-1">${email.oldest_days_overdue || 0} days overdue</span>
+                        <div class="email-badges">
+                            <span class="badge badge-days">${email.oldest_days_overdue || 0} days overdue</span>
                             <span class="badge badge-level">Level ${email.escalation_level || 1}</span>
                         </div>
-                        <div class="mb-3">
-                            <small class="text-muted">${(email.companies || []).join(', ')}</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-outline-primary" onclick="previewEmail(${index}, ${requiresApproval})">
-                                <i class="bi bi-eye me-1"></i>Preview
+                        <div class="email-companies">${(email.companies || []).join(', ')}</div>
+                        <div class="email-actions">
+                            <button class="btn btn-sm btn-outline" onclick="previewEmail(${index}, ${requiresApproval})">
+                                <i class="bi bi-eye"></i> Preview
                             </button>
                             ${requiresApproval ? `
                                 <button class="btn btn-sm btn-success" onclick="approveAndSend(${index}, this)">
-                                    <i class="bi bi-check me-1"></i>Approve & Send
+                                    <i class="bi bi-check"></i> Approve & Send
                                 </button>
                             ` : ''}
                         </div>
@@ -506,9 +1110,13 @@
 
             document.getElementById('modal-subject').textContent = subject;
             document.getElementById('modal-body').textContent = body;
-            document.getElementById('modal-send-btn').style.display = isApproval ? 'inline-block' : 'none';
+            document.getElementById('modal-send-btn').style.display = isApproval ? 'inline-flex' : 'none';
 
-            new bootstrap.Modal(document.getElementById('emailModal')).show();
+            document.getElementById('emailModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('emailModal').classList.remove('show');
         }
 
         async function sendAutonomousEmails() {
@@ -524,7 +1132,7 @@
 
             const btn = document.getElementById('btn-send');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+            btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Sending...';
 
             let sent = 0;
             let errors = [];
@@ -538,8 +1146,8 @@
                     if (result.success) {
                         sent++;
                         if (card) {
-                            card.style.background = 'var(--success-light)';
-                            card.style.borderLeftColor = 'var(--success)';
+                            card.style.background = 'var(--accent-green-light)';
+                            card.style.borderLeftColor = 'var(--accent-green)';
                             setTimeout(() => {
                                 card.style.opacity = '0';
                                 card.style.transform = 'translateX(50px)';
@@ -549,7 +1157,7 @@
                     } else {
                         errors.push(`${email.contact_name}: ${result.error}`);
                         if (card) {
-                            card.style.background = 'var(--danger-light)';
+                            card.style.background = 'var(--accent-red-light)';
                         }
                     }
                 } catch (e) {
@@ -557,7 +1165,7 @@
                 }
             }
 
-            btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Autonomous Emails';
+            btn.innerHTML = '<i class="bi bi-send"></i> Send Autonomous Emails';
 
             let message = `Sent ${sent} of ${count} emails.`;
             if (errors.length > 0) {
@@ -566,7 +1174,6 @@
 
             alert(message);
 
-            // Update counts
             document.getElementById('count-autonomous').textContent = '0';
             document.getElementById('stat-autonomous').textContent = '0';
         }
@@ -575,60 +1182,47 @@
             const email = analysisResults.pending_approvals[index];
             const card = document.getElementById(`email-approval-${index}`);
 
-            // Disable button and show loading
             if (buttonElement) {
                 buttonElement.disabled = true;
-                buttonElement.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...';
+                buttonElement.innerHTML = '<div class="spinner" style="width:12px;height:12px;border-width:2px;"></div> Sending...';
             }
 
             try {
                 const result = await sendEmail(email);
 
                 if (result.success) {
-                    // Visual feedback - success
                     if (card) {
                         card.style.transition = 'all 0.3s ease';
-                        card.style.background = 'var(--success-light)';
-                        card.style.borderLeftColor = 'var(--success)';
+                        card.style.background = 'var(--accent-green-light)';
+                        card.style.borderLeftColor = 'var(--accent-green)';
                         if (buttonElement) {
-                            buttonElement.innerHTML = '<i class="bi bi-check-circle me-1"></i>Sent!';
-                            buttonElement.classList.remove('btn-success');
-                            buttonElement.classList.add('btn-outline-success');
+                            buttonElement.innerHTML = '<i class="bi bi-check-circle"></i> Sent!';
                         }
 
                         setTimeout(() => {
                             card.style.opacity = '0';
                             card.style.transform = 'translateX(50px)';
-                            card.style.maxHeight = card.offsetHeight + 'px';
-                            setTimeout(() => {
-                                card.style.maxHeight = '0';
-                                card.style.padding = '0';
-                                card.style.margin = '0';
-                                card.style.overflow = 'hidden';
-                                setTimeout(() => card.remove(), 200);
-                            }, 150);
+                            setTimeout(() => card.remove(), 300);
                         }, 600);
 
-                        // Update counter
                         const countEl = document.getElementById('count-approval');
                         const current = parseInt(countEl.textContent) || 0;
                         countEl.textContent = Math.max(0, current - 1);
                         document.getElementById('stat-approval').textContent = Math.max(0, current - 1);
                     }
                 } else {
-                    // Visual feedback - error
                     if (card) {
-                        card.style.background = 'var(--danger-light)';
+                        card.style.background = 'var(--accent-red-light)';
                     }
                     if (buttonElement) {
-                        buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Failed';
+                        buttonElement.innerHTML = '<i class="bi bi-x-circle"></i> Failed';
                         buttonElement.disabled = false;
                     }
                     alert('Failed to send: ' + result.error);
                 }
             } catch (e) {
                 if (buttonElement) {
-                    buttonElement.innerHTML = '<i class="bi bi-x-circle me-1"></i>Error';
+                    buttonElement.innerHTML = '<i class="bi bi-x-circle"></i> Error';
                     buttonElement.disabled = false;
                 }
                 alert('Error: ' + e.message);
@@ -653,7 +1247,6 @@
             const firstInvoice = email.invoices && email.invoices[0];
             const invoiceId = firstInvoice ? String(firstInvoice.invoice_id || firstInvoice.id || 'unknown') : 'unknown';
 
-            // Build invoice_map for hyperlinking
             const invoiceMap = {};
             if (email.invoices && email.invoices.length > 0) {
                 email.invoices.forEach(inv => {
@@ -708,8 +1301,7 @@
         async function sendFromModal() {
             if (!currentEmailData) return;
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById('emailModal'));
-            modal.hide();
+            closeModal();
 
             const index = currentEmailData.index;
             const btn = document.querySelector(`#email-approval-${index} .btn-success`);
@@ -720,24 +1312,24 @@
             const section = document.getElementById('history-section');
             const container = document.getElementById('history-list');
 
-            section.style.display = 'block';
-            container.innerHTML = '<div class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading history...</div>';
+            section.classList.add('show');
+            container.innerHTML = '<div class="empty-state"><div class="spinner"></div><p>Loading history...</p></div>';
 
             try {
                 const response = await fetch('/klaus/history');
                 const data = await response.json();
 
                 if (!data.history || data.history.length === 0) {
-                    container.innerHTML = '<p class="text-muted text-center py-4">No communication history yet</p>';
+                    container.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No communication history yet</p></div>';
                     return;
                 }
 
-                let html = '<table class="table table-sm"><thead><tr><th>Date</th><th>Company</th><th>Method</th><th>Type</th></tr></thead><tbody>';
+                let html = '<table class="table"><thead><tr><th>Date</th><th>Company</th><th>Method</th><th>Type</th></tr></thead><tbody>';
 
                 data.history.slice(-50).reverse().forEach(h => {
                     const date = new Date(h.sent_at).toLocaleString();
                     html += `<tr>
-                        <td><small>${date}</small></td>
+                        <td>${date}</td>
                         <td>${h.company_name || '-'}</td>
                         <td><span class="badge badge-level">${h.method || '-'}</span></td>
                         <td>${h.message_type || '-'}</td>
@@ -747,13 +1339,26 @@
                 html += '</tbody></table>';
                 container.innerHTML = html;
 
-                // Scroll to history section
                 section.scrollIntoView({ behavior: 'smooth' });
 
             } catch (e) {
-                container.innerHTML = '<p class="text-danger text-center py-4">Error loading history</p>';
+                container.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Error loading history</p></div>';
             }
         }
+
+        // Close modal on backdrop click
+        document.getElementById('emailModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
 
         // Auto-analyze on load
         document.addEventListener('DOMContentLoaded', analyzeInvoices);
