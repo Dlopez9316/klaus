@@ -21,7 +21,7 @@ class HubSpotClient:
         # Portal ID for generating invoice URLs
         # Hardcoded for Leverage Live Local
         self.portal_id = portal_id or os.getenv("HUBSPOT_PORTAL_ID") or "44968885"
-        print(f"✓ HubSpot Portal ID: {self.portal_id}")
+        print(f"[OK] HubSpot Portal ID: {self.portal_id}")
     
     def get_invoice_url(self, invoice_id: str) -> str:
         """

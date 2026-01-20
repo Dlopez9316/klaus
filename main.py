@@ -97,13 +97,13 @@ try:
         klaus_email_responder = KlausEmailResponder(
             anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
         )
-        print("✓ Klaus Gmail initialized")
+        print("[OK] Klaus Gmail initialized")
     else:
         raise Exception("No Gmail credentials found (neither env vars nor file)")
 except Exception as e:
     klaus_gmail = None
     klaus_email_responder = None
-    print(f"⚠ Klaus Gmail not available: {e}")
+    print(f"[WARN] Klaus Gmail not available: {e}")
 
 # Initialize notification service with Gmail client (if available)
 notification_service = NotificationService(gmail_client=klaus_gmail)
@@ -112,9 +112,9 @@ notification_service = NotificationService(gmail_client=klaus_gmail)
 klaus_smtp = None
 try:
     klaus_smtp = KlausSMTPClient()
-    print("✓ Klaus SMTP initialized")
+    print("[OK] Klaus SMTP initialized")
 except Exception as e:
-    print(f"⚠ Klaus SMTP not available: {e}")
+    print(f"[WARN] Klaus SMTP not available: {e}")
 
 # Initialize Klaus Google Drive (only if credentials are available)
 try:
@@ -123,11 +123,11 @@ try:
         drive_client=klaus_drive,
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
     )
-    print("✓ Klaus Drive initialized")
+    print("[OK] Klaus Drive initialized")
 except Exception as e:
     klaus_drive = None
     klaus_knowledge = None
-    print(f"⚠ Klaus Drive not available: {e}")
+    print(f"[WARN] Klaus Drive not available: {e}")
 
 # Initialize Klaus Voice (only if Vapi key is available)
 call_queue = None
@@ -146,17 +146,17 @@ try:
             scheduler=call_scheduler,
             daily_limit=int(os.getenv("VOICE_DAILY_CALL_LIMIT", "10"))
         )
-        print("✓ Klaus Voice initialized")
+        print("[OK] Klaus Voice initialized")
     else:
         klaus_voice = None
         call_scheduler = None
         call_queue = None
-        print("⚠ Klaus Voice not available: VAPI_API_KEY not set")
+        print("[WARN] Klaus Voice not available: VAPI_API_KEY not set")
 except Exception as e:
     klaus_voice = None
     call_scheduler = None
     call_queue = None
-    print(f"⚠ Klaus Voice not available: {e}")
+    print(f"[WARN] Klaus Voice not available: {e}")
 
 # Scheduler
 scheduler = BackgroundScheduler()
@@ -179,7 +179,7 @@ if klaus_voice:
         engine=klaus_engine
     )
     app.include_router(voice_router)
-    print("✓ Klaus Voice routes registered")
+    print("[OK] Klaus Voice routes registered")
 
 # ============================================================================
 # PYDANTIC MODELS
@@ -2497,7 +2497,7 @@ async def startup_event():
     # Initialize database if on Railway
     if db.USE_DATABASE:
         db.init_database()
-        print("✓ PostgreSQL database initialized")
+        print("[OK] PostgreSQL database initialized")
     else:
         print("Using local JSON file storage (no DATABASE_URL)")
 
@@ -2520,10 +2520,10 @@ async def startup_event():
             # Use combined job that runs: Reconciliation + Klaus Collections + Email Processing
             scheduler.add_job(scheduled_full_run, trigger, id='full_run')
 
-            print(f"✓ Loaded schedule: {config['frequency']} at {config['time']}")
+            print(f"[OK] Loaded schedule: {config['frequency']} at {config['time']}")
             print(f"  Jobs: Reconciliation + Klaus Collections + Email Processing")
         except Exception as e:
-            print(f"✗ Failed to load schedule: {e}")
+            print(f"[ERR] Failed to load schedule: {e}")
 
     # Setup Vapi inbound call handling if configured
     # NOTE: We no longer create/update the assistant on startup to preserve Vapi dashboard settings
@@ -2535,11 +2535,11 @@ async def startup_event():
             if inbound_assistant_id:
                 result = klaus_voice.setup_inbound_handling(inbound_assistant_id)
                 if result.get('status') == 'success':
-                    print("✓ Klaus Voice inbound calls configured")
+                    print("[OK] Klaus Voice inbound calls configured")
                 else:
-                    print(f"⚠ Klaus Voice inbound setup: {result.get('error', 'unknown error')}")
+                    print(f"[WARN] Klaus Voice inbound setup: {result.get('error', 'unknown error')}")
         except Exception as e:
-            print(f"⚠ Klaus Voice inbound setup failed: {e}")
+            print(f"[WARN] Klaus Voice inbound setup failed: {e}")
 
     # Setup email polling (check every 5 minutes, respond with 0-12 min random delay)
     if klaus_gmail and klaus_email_responder:
@@ -2550,21 +2550,21 @@ async def startup_event():
                 id='email_poll',
                 replace_existing=True
             )
-            print("✓ Klaus Email Polling: every 5 minutes (+ 0-12 min response delay)")
+            print("[OK] Klaus Email Polling: every 5 minutes (+ 0-12 min response delay)")
         except Exception as e:
-            print(f"⚠ Klaus Email Polling setup failed: {e}")
+            print(f"[WARN] Klaus Email Polling setup failed: {e}")
 
     print("\n" + "="*60)
     print("Reconciliation Agent + Klaus Collections")
     print("="*60)
-    print(f"Reconciliation: ✓ Active")
-    print(f"Klaus Gmail: {'✓ Active' if klaus_gmail else '✗ Disabled'}")
-    print(f"Klaus SMTP: {'✓ Active' if klaus_smtp else '✗ Disabled'}")
-    print(f"Klaus Drive: {'✓ Active' if klaus_drive else '✗ Disabled'}")
-    print(f"Klaus Voice: {'✓ Active' if klaus_voice else '✗ Disabled'}")
-    print(f"Email Service: {'✓ Active' if (klaus_gmail or klaus_smtp) else '✗ Disabled'}")
-    print(f"Email Responder: {'✓ Active' if klaus_email_responder else '✗ Disabled'}")
-    print(f"Email Polling: {'✓ Every 5 min' if (klaus_gmail and klaus_email_responder) else '✗ Disabled'}")
+    print(f"Reconciliation: [OK] Active")
+    print(f"Klaus Gmail: {'[OK] Active' if klaus_gmail else '[--] Disabled'}")
+    print(f"Klaus SMTP: {'[OK] Active' if klaus_smtp else '[--] Disabled'}")
+    print(f"Klaus Drive: {'[OK] Active' if klaus_drive else '[--] Disabled'}")
+    print(f"Klaus Voice: {'[OK] Active' if klaus_voice else '[--] Disabled'}")
+    print(f"Email Service: {'[OK] Active' if (klaus_gmail or klaus_smtp) else '[--] Disabled'}")
+    print(f"Email Responder: {'[OK] Active' if klaus_email_responder else '[--] Disabled'}")
+    print(f"Email Polling: {'[OK] Every 5 min' if (klaus_gmail and klaus_email_responder) else '[--] Disabled'}")
     print("="*60 + "\n")
 
 if __name__ == "__main__":

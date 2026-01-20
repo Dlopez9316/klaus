@@ -110,7 +110,7 @@ class KlausSMTPClient:
                     server.login(self.smtp_user, self.smtp_password)
                     server.send_message(msg)
             
-            print(f"[SMTP] ✓ Email sent successfully to {to_email}")
+            print(f"[SMTP] [OK] Email sent successfully to {to_email}")
 
             # Save to Sent folder via IMAP
             print("[SMTP] Now attempting to save to Sent folder...")
@@ -163,14 +163,14 @@ class KlausSMTPClient:
             print(f"[IMAP] Append result: {result}")
 
             imap.logout()
-            print("[IMAP] ✓ Email saved to Sent folder")
+            print("[IMAP] [OK] Email saved to Sent folder")
             return True
 
         except imaplib.IMAP4.error as e:
-            print(f"⚠ [IMAP] IMAP error saving to Sent folder: {e}")
+            print(f"[WARN] [IMAP] IMAP error saving to Sent folder: {e}")
             return False
         except Exception as e:
-            print(f"⚠ [IMAP] Failed to save to Sent folder: {e}")
+            print(f"[WARN] [IMAP] Failed to save to Sent folder: {e}")
             import traceback
             traceback.print_exc()
             return False

@@ -164,7 +164,7 @@ class KlausGmailClient:
                     pickle.dump(creds, token)
 
         self.service = build('gmail', 'v1', credentials=creds)
-        print("[GMAIL] ✓ Gmail service initialized")
+        print("[GMAIL] [OK] Gmail service initialized")
     
     def send_email(
         self,
