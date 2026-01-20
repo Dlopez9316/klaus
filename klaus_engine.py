@@ -155,7 +155,7 @@ class KlausEngine:
 
         # Check if invoice has been manually approved/resolved - skip if so
         if self.is_invoice_approved(invoice_id):
-            company_name = invoice.get('company_name', 'Unknown')
+            company_name = invoice.get('company_name') or 'Unknown'
             contact_name = self._extract_contact_name(invoice)
             contact_email = self._extract_contact_email(invoice)
             return {
@@ -184,7 +184,7 @@ class KlausEngine:
         
         # Get other fields
         due_date = invoice.get('due_date')
-        company_name = invoice.get('company_name', 'Unknown')
+        company_name = invoice.get('company_name') or 'Unknown'
         
         # Extract contact information
         contact_name = self._extract_contact_name(invoice)
@@ -940,10 +940,10 @@ Best regards,
             
             # Check if this is a VIP contact (check all companies)
             # Use substring matching - e.g., "Terra" matches "TERRA WEST MF INVESTMENTS LLC"
-            vip_keywords = self.config.get('vip_contacts', [])
+            vip_keywords = [k for k in self.config.get('vip_contacts', []) if k]
             is_vip = any(
                 any(
-                    vip_keyword.upper() in inv['company_name'].upper()
+                    vip_keyword.upper() in (inv.get('company_name') or '').upper()
                     for vip_keyword in vip_keywords
                 )
                 for inv in contact_invoices
